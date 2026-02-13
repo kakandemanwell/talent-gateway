@@ -323,85 +323,90 @@ const Index = () => {
                 <Plus className="mr-1 h-4 w-4" /> Add
               </Button>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[150px]">Position/Role *</TableHead>
-                    <TableHead className="min-w-[200px]">Description</TableHead>
-                    <TableHead className="min-w-[150px]">Employer *</TableHead>
-                    <TableHead className="min-w-[120px]">Start Date *</TableHead>
-                    <TableHead className="min-w-[120px]">End Date *</TableHead>
-                    <TableHead className="min-w-[80px]">Years</TableHead>
-                    <TableHead className="w-[50px]" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {experience.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <Input
-                          placeholder="e.g. Software Engineer"
-                          value={row.position}
-                          onChange={(e) => updateExperience(row.id, "position", e.target.value)}
-                          className={errors.experience?.[row.id]?.position ? "border-destructive" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          placeholder="Brief description"
-                          value={row.description}
-                          onChange={(e) => updateExperience(row.id, "description", e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          placeholder="Company name"
-                          value={row.employer}
-                          onChange={(e) => updateExperience(row.id, "employer", e.target.value)}
-                          className={errors.experience?.[row.id]?.employer ? "border-destructive" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="month"
-                          value={row.startDate}
-                          onChange={(e) => updateExperience(row.id, "startDate", e.target.value)}
-                          className={errors.experience?.[row.id]?.startDate ? "border-destructive" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="month"
-                          value={row.endDate}
-                          onChange={(e) => updateExperience(row.id, "endDate", e.target.value)}
-                          className={errors.experience?.[row.id]?.endDate ? "border-destructive" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
+            <CardContent>
+              {experience.map((row, index) => (
+                <div
+                  key={row.id}
+                  className={`rounded-lg border bg-muted/20 p-4 ${index > 0 ? "mt-4" : ""}`}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Experience #{index + 1}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setExperience((prev) =>
+                          prev.length > 1 ? prev.filter((r) => r.id !== row.id) : prev
+                        )
+                      }
+                      disabled={experience.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  {/* Row 1: Position, Description, Employer */}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-1">
+                      <Label>Position/Role *</Label>
+                      <Input
+                        placeholder="e.g. Software Engineer"
+                        value={row.position}
+                        onChange={(e) => updateExperience(row.id, "position", e.target.value)}
+                        className={errors.experience?.[row.id]?.position ? "border-destructive" : ""}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Description</Label>
+                      <Input
+                        placeholder="Brief description"
+                        value={row.description}
+                        onChange={(e) => updateExperience(row.id, "description", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Employer *</Label>
+                      <Input
+                        placeholder="Company name"
+                        value={row.employer}
+                        onChange={(e) => updateExperience(row.id, "employer", e.target.value)}
+                        className={errors.experience?.[row.id]?.employer ? "border-destructive" : ""}
+                      />
+                    </div>
+                  </div>
+                  {/* Row 2: Start Date, End Date, Years */}
+                  <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-1">
+                      <Label>Start Date *</Label>
+                      <Input
+                        type="month"
+                        value={row.startDate}
+                        onChange={(e) => updateExperience(row.id, "startDate", e.target.value)}
+                        className={errors.experience?.[row.id]?.startDate ? "border-destructive" : ""}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>End Date *</Label>
+                      <Input
+                        type="month"
+                        value={row.endDate}
+                        onChange={(e) => updateExperience(row.id, "endDate", e.target.value)}
+                        className={errors.experience?.[row.id]?.endDate ? "border-destructive" : ""}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Years</Label>
+                      <div className="flex min-h-10 items-center rounded-md border border-input bg-muted/50 px-3">
                         <span className="text-sm font-medium text-muted-foreground">
                           {row.years ? `${row.years} yr${row.years !== "1" ? "s" : ""}` : "—"}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setExperience((prev) =>
-                              prev.length > 1 ? prev.filter((r) => r.id !== row.id) : prev
-                            )
-                          }
-                          disabled={experience.length === 1}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
