@@ -19,8 +19,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User } from "lucide-react";
+import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2 } from "lucide-react";
 
 interface ExperienceRow {
   id: string;
@@ -91,6 +100,7 @@ const Index = () => {
   const [experience, setExperience] = useState<ExperienceRow[]>([createEmptyExperience()]);
   const [education, setEducation] = useState<EducationRow[]>([createEmptyEducation()]);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -175,10 +185,7 @@ const Index = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      toast({
-        title: "Application Submitted!",
-        description: "Your job application has been received successfully.",
-      });
+      setShowSuccess(true);
     } else {
       toast({
         title: "Validation Error",
@@ -517,6 +524,23 @@ const Index = () => {
           </div>
         </form>
       </div>
+
+      <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <AlertDialogContent className="text-center">
+          <AlertDialogHeader className="items-center">
+            <CheckCircle2 className="h-16 w-16 text-primary mb-2" />
+            <AlertDialogTitle className="text-2xl">Application Submitted!</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Your job application has been received successfully. We will review your application and get back to you shortly.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction onClick={() => setShowSuccess(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
