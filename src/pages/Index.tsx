@@ -36,6 +36,8 @@ interface ExperienceRow {
   position: string;
   description: string;
   employer: string;
+  startDate: string;
+  endDate: string;
   years: string;
 }
 
@@ -73,11 +75,23 @@ const EDUCATION_LEVELS = [
   "Other",
 ];
 
+const computeYears = (start: string, end: string): string => {
+  if (!start || !end) return "";
+  const [sy, sm] = start.split("-").map(Number);
+  const [ey, em] = end.split("-").map(Number);
+  const months = (ey - sy) * 12 + (em - sm);
+  if (months <= 0) return "0";
+  const years = months / 12;
+  return (Math.round(years * 2) / 2).toString();
+};
+
 const createEmptyExperience = (): ExperienceRow => ({
   id: generateId(),
   position: "",
   description: "",
   employer: "",
+  startDate: "",
+  endDate: "",
   years: "",
 });
 
@@ -134,7 +148,14 @@ const Index = () => {
 
   const updateExperience = (id: string, field: keyof ExperienceRow, value: string) => {
     setExperience((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+      prev.map((row) => {
+        if (row.id !== id) return row;
+        const updated = { ...row, [field]: value };
+        if (field === "startDate" || field === "endDate") {
+          updated.years = computeYears(updated.startDate, updated.endDate);
+        }
+        return updated;
+      })
     );
   };
 
@@ -161,7 +182,8 @@ const Index = () => {
       const rowErr: Record<string, string> = {};
       if (!row.position.trim()) rowErr.position = "Required";
       if (!row.employer.trim()) rowErr.employer = "Required";
-      if (!row.years.trim()) rowErr.years = "Required";
+      if (!row.startDate) rowErr.startDate = "Required";
+      if (!row.endDate) rowErr.endDate = "Required";
       if (Object.keys(rowErr).length) expErrors[row.id] = rowErr;
     });
     if (Object.keys(expErrors).length) newErrors.experience = expErrors;
@@ -308,7 +330,9 @@ const Index = () => {
                     <TableHead className="min-w-[150px]">Position/Role *</TableHead>
                     <TableHead className="min-w-[200px]">Description</TableHead>
                     <TableHead className="min-w-[150px]">Employer *</TableHead>
-                    <TableHead className="min-w-[100px]">Years *</TableHead>
+                    <TableHead className="min-w-[120px]">Start Date *</TableHead>
+                    <TableHead className="min-w-[120px]">End Date *</TableHead>
+                    <TableHead className="min-w-[80px]">Years</TableHead>
                     <TableHead className="w-[50px]" />
                   </TableRow>
                 </TableHeader>
@@ -340,13 +364,24 @@ const Index = () => {
                       </TableCell>
                       <TableCell>
                         <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={row.years}
-                          onChange={(e) => updateExperience(row.id, "years", e.target.value)}
-                          className={errors.experience?.[row.id]?.years ? "border-destructive" : ""}
+                          type="month"
+                          value={row.startDate}
+                          onChange={(e) => updateExperience(row.id, "startDate", e.target.value)}
+                          className={errors.experience?.[row.id]?.startDate ? "border-destructive" : ""}
                         />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="month"
+                          value={row.endDate}
+                          onChange={(e) => updateExperience(row.id, "endDate", e.target.value)}
+                          className={errors.experience?.[row.id]?.endDate ? "border-destructive" : ""}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {row.years ? `${row.years} yr${row.years !== "1" ? "s" : ""}` : "—"}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Button
