@@ -19,14 +19,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User } from "lucide-react";
+import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2 } from "lucide-react";
 
 interface ExperienceRow {
   id: string;
   position: string;
   description: string;
   employer: string;
+  startDate: string;
+  endDate: string;
   years: string;
 }
 
@@ -64,11 +75,23 @@ const EDUCATION_LEVELS = [
   "Other",
 ];
 
+const computeYears = (start: string, end: string): string => {
+  if (!start || !end) return "";
+  const [sy, sm] = start.split("-").map(Number);
+  const [ey, em] = end.split("-").map(Number);
+  const months = (ey - sy) * 12 + (em - sm);
+  if (months <= 0) return "0";
+  const years = months / 12;
+  return (Math.round(years * 2) / 2).toString();
+};
+
 const createEmptyExperience = (): ExperienceRow => ({
   id: generateId(),
   position: "",
   description: "",
   employer: "",
+  startDate: "",
+  endDate: "",
   years: "",
 });
 
@@ -91,6 +114,7 @@ const Index = () => {
   const [experience, setExperience] = useState<ExperienceRow[]>([createEmptyExperience()]);
   const [education, setEducation] = useState<EducationRow[]>([createEmptyEducation()]);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,7 +148,14 @@ const Index = () => {
 
   const updateExperience = (id: string, field: keyof ExperienceRow, value: string) => {
     setExperience((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+      prev.map((row) => {
+        if (row.id !== id) return row;
+        const updated = { ...row, [field]: value };
+        if (field === "startDate" || field === "endDate") {
+          updated.years = computeYears(updated.startDate, updated.endDate);
+        }
+        return updated;
+      })
     );
   };
 
@@ -151,7 +182,8 @@ const Index = () => {
       const rowErr: Record<string, string> = {};
       if (!row.position.trim()) rowErr.position = "Required";
       if (!row.employer.trim()) rowErr.employer = "Required";
-      if (!row.years.trim()) rowErr.years = "Required";
+      if (!row.startDate) rowErr.startDate = "Required";
+      if (!row.endDate) rowErr.endDate = "Required";
       if (Object.keys(rowErr).length) expErrors[row.id] = rowErr;
     });
     if (Object.keys(expErrors).length) newErrors.experience = expErrors;
@@ -175,10 +207,7 @@ const Index = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      toast({
-        title: "Application Submitted!",
-        description: "Your job application has been received successfully.",
-      });
+      setShowSuccess(true);
     } else {
       toast({
         title: "Validation Error",
@@ -294,72 +323,90 @@ const Index = () => {
                 <Plus className="mr-1 h-4 w-4" /> Add
               </Button>
             </CardHeader>
-            <CardContent className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[150px]">Position/Role *</TableHead>
-                    <TableHead className="min-w-[200px]">Description</TableHead>
-                    <TableHead className="min-w-[150px]">Employer *</TableHead>
-                    <TableHead className="min-w-[100px]">Years *</TableHead>
-                    <TableHead className="w-[50px]" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {experience.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <Input
-                          placeholder="e.g. Software Engineer"
-                          value={row.position}
-                          onChange={(e) => updateExperience(row.id, "position", e.target.value)}
-                          className={errors.experience?.[row.id]?.position ? "border-destructive" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          placeholder="Brief description"
-                          value={row.description}
-                          onChange={(e) => updateExperience(row.id, "description", e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          placeholder="Company name"
-                          value={row.employer}
-                          onChange={(e) => updateExperience(row.id, "employer", e.target.value)}
-                          className={errors.experience?.[row.id]?.employer ? "border-destructive" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={row.years}
-                          onChange={(e) => updateExperience(row.id, "years", e.target.value)}
-                          className={errors.experience?.[row.id]?.years ? "border-destructive" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            setExperience((prev) =>
-                              prev.length > 1 ? prev.filter((r) => r.id !== row.id) : prev
-                            )
-                          }
-                          disabled={experience.length === 1}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <CardContent>
+              {experience.map((row, index) => (
+                <div
+                  key={row.id}
+                  className={`rounded-lg border bg-muted/20 p-4 ${index > 0 ? "mt-4" : ""}`}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      Experience #{index + 1}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setExperience((prev) =>
+                          prev.length > 1 ? prev.filter((r) => r.id !== row.id) : prev
+                        )
+                      }
+                      disabled={experience.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  {/* Row 1: Position, Description, Employer */}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-1">
+                      <Label>Position/Role *</Label>
+                      <Input
+                        placeholder="e.g. Software Engineer"
+                        value={row.position}
+                        onChange={(e) => updateExperience(row.id, "position", e.target.value)}
+                        className={errors.experience?.[row.id]?.position ? "border-destructive" : ""}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Description</Label>
+                      <Input
+                        placeholder="Brief description"
+                        value={row.description}
+                        onChange={(e) => updateExperience(row.id, "description", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Employer *</Label>
+                      <Input
+                        placeholder="Company name"
+                        value={row.employer}
+                        onChange={(e) => updateExperience(row.id, "employer", e.target.value)}
+                        className={errors.experience?.[row.id]?.employer ? "border-destructive" : ""}
+                      />
+                    </div>
+                  </div>
+                  {/* Row 2: Start Date, End Date, Years */}
+                  <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-1">
+                      <Label>Start Date *</Label>
+                      <Input
+                        type="month"
+                        value={row.startDate}
+                        onChange={(e) => updateExperience(row.id, "startDate", e.target.value)}
+                        className={errors.experience?.[row.id]?.startDate ? "border-destructive" : ""}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>End Date *</Label>
+                      <Input
+                        type="month"
+                        value={row.endDate}
+                        onChange={(e) => updateExperience(row.id, "endDate", e.target.value)}
+                        className={errors.experience?.[row.id]?.endDate ? "border-destructive" : ""}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Years</Label>
+                      <div className="flex min-h-10 items-center rounded-md border border-input bg-muted/50 px-3">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {row.years ? `${row.years} yr${row.years !== "1" ? "s" : ""}` : "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -517,6 +564,23 @@ const Index = () => {
           </div>
         </form>
       </div>
+
+      <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <AlertDialogContent className="text-center">
+          <AlertDialogHeader className="items-center">
+            <CheckCircle2 className="h-16 w-16 text-primary mb-2" />
+            <AlertDialogTitle className="text-2xl">Application Submitted!</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Your job application has been received successfully. We will review your application and get back to you shortly.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction onClick={() => setShowSuccess(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
