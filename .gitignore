@@ -24,5 +24,6 @@ dist-ssr
 *.sw?
 
 
-.nev
+/.env
+.env
 recruitment_gateway/

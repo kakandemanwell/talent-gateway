@@ -29,7 +29,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2, Loader2 } from "lucide-react";
+import { submitApplication } from "@/lib/applicationService";
 
 interface ExperienceRow {
   id: string;
@@ -115,6 +116,7 @@ const Index = () => {
   const [education, setEducation] = useState<EducationRow[]>([createEmptyEducation()]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -204,16 +206,64 @@ const Index = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      setShowSuccess(true);
-    } else {
+    if (!validate()) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields correctly.",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await submitApplication({
+        fullName,
+        email,
+        phone,
+        summary,
+        cv: cv!,
+        experience: experience.map((exp) => ({
+          position: exp.position,
+          description: exp.description,
+          employer: exp.employer,
+          startDate: exp.startDate,
+          endDate: exp.endDate,
+          years: exp.years,
+        })),
+        education: education.map((edu) => ({
+          qualification: edu.qualification,
+          level: edu.level,
+          field: edu.field,
+          institution: edu.institution,
+          yearCompleted: edu.yearCompleted,
+          accolade: edu.accolade,
+        })),
+      });
+
+      setShowSuccess(true);
+
+      // Reset form after successful submission
+      setFullName("");
+      setEmail("");
+      setPhone("");
+      setSummary("");
+      setCv(null);
+      setExperience([createEmptyExperience()]);
+      setEducation([createEmptyEducation()]);
+      setErrors({});
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
+      toast({
+        title: "Submission Failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -558,8 +608,15 @@ const Index = () => {
 
           {/* Submit */}
           <div className="flex justify-end">
-            <Button type="submit" size="lg" className="px-10">
-              Apply
+            <Button type="submit" size="lg" className="px-10" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                "Apply"
+              )}
             </Button>
           </div>
         </form>
