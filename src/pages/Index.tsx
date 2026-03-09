@@ -108,6 +108,8 @@ const createEmptyEducation = (): EducationRow => ({
 });
 
 const Index = () => {
+  const { jobId } = useParams<{ jobId: string }>();
+  const job = jobId ? jobs.find((j) => j.id === jobId) : null;
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
