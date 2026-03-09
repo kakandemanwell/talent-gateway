@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { jobs } from "@/data/jobs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
