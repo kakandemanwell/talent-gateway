@@ -226,11 +226,18 @@ const Index = () => {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Job Application
+            {job ? `Apply: ${job.title}` : "Job Application"}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Fill in the form below to apply for this position.
+            {job
+              ? `${job.department} · ${job.location} · ${job.type}`
+              : "Fill in the form below to apply for this position."}
           </p>
+          {job && (
+            <Link to={`/jobs/${job.id}`} className="mt-1 inline-block text-sm text-primary hover:underline">
+              ← View full job listing
+            </Link>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
