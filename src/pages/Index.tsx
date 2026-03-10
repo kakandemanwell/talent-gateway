@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { jobs } from "@/data/jobs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,6 +109,8 @@ const createEmptyEducation = (): EducationRow => ({
 });
 
 const Index = () => {
+  const { jobId } = useParams<{ jobId: string }>();
+  const job = jobId ? jobs.find((j) => j.id === jobId) : null;
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -272,11 +276,18 @@ const Index = () => {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Job Application
+            {job ? `Apply: ${job.title}` : "Job Application"}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Fill in the form below to apply for this position.
+            {job
+              ? `${job.department} · ${job.location} · ${job.type}`
+              : "Fill in the form below to apply for this position."}
           </p>
+          {job && (
+            <Link to={`/jobs/${job.id}`} className="mt-1 inline-block text-sm text-primary hover:underline">
+              ← View full job listing
+            </Link>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
