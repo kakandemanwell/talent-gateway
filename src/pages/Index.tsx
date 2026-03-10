@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { submitApplication } from "@/lib/applicationService";
 
 interface ExperienceRow {
@@ -41,6 +42,7 @@ interface ExperienceRow {
   employer: string;
   startDate: string;
   endDate: string;
+  isCurrent: boolean;
   years: string;
 }
 
@@ -68,14 +70,15 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 
 const MAX_CV_SIZE = 12 * 1024 * 1024; // 12MB
 
-const EDUCATION_LEVELS = [
-  "Certificate",
-  "Diploma",
-  "Higher Diploma",
-  "Bachelor's Degree",
-  "Master's Degree",
-  "PhD/Doctorate",
-  "Other",
+const EDUCATION_LEVELS: { key: string; label: string }[] = [
+  { key: "certificate",    label: "Certificate" },
+  { key: "diploma",        label: "Diploma" },
+  { key: "higher_diploma", label: "Higher Diploma" },
+  { key: "bachelor",       label: "Bachelor's Degree" },
+  { key: "honours",        label: "Honours Degree" },
+  { key: "master",         label: "Master's Degree" },
+  { key: "phd",            label: "PhD / Doctorate" },
+  { key: "other",          label: "Other" },
 ];
 
 const computeYears = (start: string, end: string): string => {
@@ -88,6 +91,13 @@ const computeYears = (start: string, end: string): string => {
   return (Math.round(years * 2) / 2).toString();
 };
 
+const computeYearsFromNow = (start: string): string => {
+  if (!start) return "";
+  const now = new Date();
+  const end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  return computeYears(start, end);
+};
+
 const createEmptyExperience = (): ExperienceRow => ({
   id: generateId(),
   position: "",
@@ -95,6 +105,7 @@ const createEmptyExperience = (): ExperienceRow => ({
   employer: "",
   startDate: "",
   endDate: "",
+  isCurrent: false,
   years: "",
 });
 
@@ -175,9 +186,28 @@ const Index = () => {
         if (row.id !== id) return row;
         const updated = { ...row, [field]: value };
         if (field === "startDate" || field === "endDate") {
-          updated.years = computeYears(updated.startDate, updated.endDate);
+          updated.years = row.isCurrent
+            ? computeYearsFromNow(updated.startDate)
+            : computeYears(updated.startDate, updated.endDate);
         }
         return updated;
+      })
+    );
+  };
+
+  const toggleIsCurrent = (id: string) => {
+    setExperience((prev) =>
+      prev.map((row) => {
+        if (row.id !== id) return row;
+        const isCurrent = !row.isCurrent;
+        return {
+          ...row,
+          isCurrent,
+          endDate: isCurrent ? "" : row.endDate,
+          years: isCurrent
+            ? computeYearsFromNow(row.startDate)
+            : computeYears(row.startDate, row.endDate),
+        };
       })
     );
   };
@@ -206,7 +236,7 @@ const Index = () => {
       if (!row.position.trim()) rowErr.position = "Required";
       if (!row.employer.trim()) rowErr.employer = "Required";
       if (!row.startDate) rowErr.startDate = "Required";
-      if (!row.endDate) rowErr.endDate = "Required";
+      if (!row.isCurrent && !row.endDate) rowErr.endDate = "Required";
       if (Object.keys(rowErr).length) expErrors[row.id] = rowErr;
     });
     if (Object.keys(expErrors).length) newErrors.experience = expErrors;
@@ -252,7 +282,8 @@ const Index = () => {
           description: exp.description,
           employer: exp.employer,
           startDate: exp.startDate,
-          endDate: exp.endDate,
+          endDate: exp.isCurrent ? "" : exp.endDate,
+          isCurrent: exp.isCurrent,
           years: exp.years,
         })),
         education: education.map((edu) => ({
@@ -475,13 +506,21 @@ const Index = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label>End Date *</Label>
+                      <Label>End Date {!row.isCurrent && <span className="text-destructive">*</span>}</Label>
                       <Input
                         type="month"
                         value={row.endDate}
+                        disabled={row.isCurrent}
                         onChange={(e) => updateExperience(row.id, "endDate", e.target.value)}
                         className={errors.experience?.[row.id]?.endDate ? "border-destructive" : ""}
                       />
+                      <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                        <Checkbox
+                          checked={row.isCurrent}
+                          onCheckedChange={() => toggleIsCurrent(row.id)}
+                        />
+                        Current position
+                      </label>
                     </div>
                     <div className="space-y-1">
                       <Label>Years</Label>
@@ -557,9 +596,9 @@ const Index = () => {
                           <SelectValue placeholder="Select level" />
                         </SelectTrigger>
                         <SelectContent>
-                          {EDUCATION_LEVELS.map((lvl) => (
-                            <SelectItem key={lvl} value={lvl}>
-                              {lvl}
+                          {EDUCATION_LEVELS.map(({ key, label }) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -35,6 +35,10 @@ ALTER TABLE applications
   ADD COLUMN IF NOT EXISTS gateway_sync_status TEXT NOT NULL DEFAULT 'new';
   -- gateway_sync_status values: 'new' | 'imported' | 'failed'
 
+-- 3. Add is_current to experience (Gap 3: required by Odoo hr.applicant.experience model)
+ALTER TABLE experience
+  ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT false;
+
 CREATE INDEX IF NOT EXISTS idx_applications_job    ON applications(job_id);
 CREATE INDEX IF NOT EXISTS idx_applications_gsync  ON applications(gateway_sync_status);
 

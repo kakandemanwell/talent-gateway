@@ -14,7 +14,7 @@ const corsHeaders = {
 };
 
 const FILES_BUCKET = "application-files";
-const SIGNED_URL_TTL = 3600; // 1 hour in seconds
+const SIGNED_URL_TTL = 86400; // 24 hours — gives Odoo cron a full day to download files
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -81,7 +81,7 @@ Deno.serve(async (req: Request) => {
       cv_file_path,
       gateway_sync_status,
       created_at,
-      experience ( position, description, employer, start_date, end_date, years ),
+      experience ( position, description, employer, start_date, end_date, is_current, years ),
       education  ( qualification, level, field_of_study, institution, year_completed, accolade_file_path )
     `)
     .in("job_id", jobUuids)
@@ -107,7 +107,7 @@ Deno.serve(async (req: Request) => {
               : null;
           return {
             qualification:  edu.qualification,
-            level:          edu.level,
+            level:          edu.level,   // stored as Odoo key ("bachelor", "master", etc.)
             field_of_study: edu.field_of_study,
             institution:    edu.institution,
             year_completed: edu.year_completed,
@@ -116,11 +116,16 @@ Deno.serve(async (req: Request) => {
         })
       );
 
-      const jobMeta = jobMap[app.job_id as string];
-
-      return {
-        application_ref: app.id,
-        job_id:          jobMeta?.odoo_job_id ?? null,
+      const experienceWithDates = (app.experience ?? []).map(
+        (exp: Record<string, unknown>) => ({
+          position:    exp.position,
+          employer:    exp.employer,
+          description: exp.description,
+          // Gap 1: pad YYYY-MM → YYYY-MM-DD for Odoo fields.Date compatibility
+          start_date:  padToFullDate(exp.start_date as string | null),
+          end_date:    exp.is_current ? null : padToFullDate(exp.end_date as string | null),
+          is_current:  exp.is_current ?? false,
+          years:       exp.years,
         submitted_at:    app.created_at,
         personal: {
           full_name: app.full_name,
@@ -130,7 +135,7 @@ Deno.serve(async (req: Request) => {
         summary:            app.summary,
         cv_url:             cvUrl?.signedUrl ?? null,
         cv_url_expires_at:  cvUrl?.expiresAt ?? null,
-        experience:         app.experience ?? [],
+        experience:         experienceWithDates,
         education:          educationWithUrls,
       };
     })
@@ -147,6 +152,19 @@ Deno.serve(async (req: Request) => {
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Gap 1: Odoo fields.Date requires full ISO "YYYY-MM-DD".
+ * The form stores month-picker values as "YYYY-MM" — pad to first of the month.
+ */
+function padToFullDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  // Already full date
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  // Month-only — append first day
+  if (/^\d{4}-\d{2}$/.test(value)) return `${value}-01`;
+  return value;
+}
 
 async function signedUrl(
   supabase: ReturnType<typeof createClient>,

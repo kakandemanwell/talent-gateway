@@ -10,6 +10,7 @@ export interface ExperiencePayload {
   employer: string;
   startDate: string;
   endDate: string;
+  isCurrent: boolean;
   years: string;
 }
 
@@ -128,7 +129,8 @@ export async function submitApplication(
         description: exp.description,
         employer: exp.employer,
         start_date: exp.startDate,
-        end_date: exp.endDate,
+        end_date: exp.isCurrent ? null : (exp.endDate || null),
+        is_current: exp.isCurrent,
         years: exp.years ? parseFloat(exp.years) : null,
       }));
 
