@@ -126,6 +126,14 @@ Deno.serve(async (req: Request) => {
           end_date:    exp.is_current ? null : padToFullDate(exp.end_date as string | null),
           is_current:  exp.is_current ?? false,
           years:       exp.years,
+        })
+      );
+
+      const jobMeta = jobMap[app.job_id as string];
+
+      return {
+        application_ref: app.id,
+        job_id:          jobMeta?.odoo_job_id ?? null,
         submitted_at:    app.created_at,
         personal: {
           full_name: app.full_name,
