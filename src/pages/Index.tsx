@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { jobs } from "@/data/jobs";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { fetchJobById, type Job } from "@/lib/jobService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +31,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { submitApplication } from "@/lib/applicationService";
 
 interface ExperienceRow {
   id: string;
@@ -40,6 +42,7 @@ interface ExperienceRow {
   employer: string;
   startDate: string;
   endDate: string;
+  isCurrent: boolean;
   years: string;
 }
 
@@ -67,14 +70,15 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 
 const MAX_CV_SIZE = 12 * 1024 * 1024; // 12MB
 
-const EDUCATION_LEVELS = [
-  "Certificate",
-  "Diploma",
-  "Higher Diploma",
-  "Bachelor's Degree",
-  "Master's Degree",
-  "PhD/Doctorate",
-  "Other",
+const EDUCATION_LEVELS: { key: string; label: string }[] = [
+  { key: "certificate",    label: "Certificate" },
+  { key: "diploma",        label: "Diploma" },
+  { key: "higher_diploma", label: "Higher Diploma" },
+  { key: "bachelor",       label: "Bachelor's Degree" },
+  { key: "honours",        label: "Honours Degree" },
+  { key: "master",         label: "Master's Degree" },
+  { key: "phd",            label: "PhD / Doctorate" },
+  { key: "other",          label: "Other" },
 ];
 
 const computeYears = (start: string, end: string): string => {
@@ -87,6 +91,13 @@ const computeYears = (start: string, end: string): string => {
   return (Math.round(years * 2) / 2).toString();
 };
 
+const computeYearsFromNow = (start: string): string => {
+  if (!start) return "";
+  const now = new Date();
+  const end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  return computeYears(start, end);
+};
+
 const createEmptyExperience = (): ExperienceRow => ({
   id: generateId(),
   position: "",
@@ -94,6 +105,7 @@ const createEmptyExperience = (): ExperienceRow => ({
   employer: "",
   startDate: "",
   endDate: "",
+  isCurrent: false,
   years: "",
 });
 
@@ -109,7 +121,24 @@ const createEmptyEducation = (): EducationRow => ({
 
 const Index = () => {
   const { jobId } = useParams<{ jobId: string }>();
-  const job = jobId ? jobs.find((j) => j.id === jobId) : null;
+  const navigate = useNavigate();
+  const [job, setJob] = useState<Job | null>(null);
+  const [jobLoading, setJobLoading] = useState(!!jobId);
+
+  useEffect(() => {
+    if (!jobId) {
+      navigate("/jobs", { replace: true });
+      return;
+    }
+    fetchJobById(jobId)
+      .then((data) => {
+        if (!data) navigate("/jobs", { replace: true });
+        else setJob(data);
+      })
+      .catch(() => navigate("/jobs", { replace: true }))
+      .finally(() => setJobLoading(false));
+  }, [jobId, navigate]);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -119,6 +148,7 @@ const Index = () => {
   const [education, setEducation] = useState<EducationRow[]>([createEmptyEducation()]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -156,9 +186,28 @@ const Index = () => {
         if (row.id !== id) return row;
         const updated = { ...row, [field]: value };
         if (field === "startDate" || field === "endDate") {
-          updated.years = computeYears(updated.startDate, updated.endDate);
+          updated.years = row.isCurrent
+            ? computeYearsFromNow(updated.startDate)
+            : computeYears(updated.startDate, updated.endDate);
         }
         return updated;
+      })
+    );
+  };
+
+  const toggleIsCurrent = (id: string) => {
+    setExperience((prev) =>
+      prev.map((row) => {
+        if (row.id !== id) return row;
+        const isCurrent = !row.isCurrent;
+        return {
+          ...row,
+          isCurrent,
+          endDate: isCurrent ? "" : row.endDate,
+          years: isCurrent
+            ? computeYearsFromNow(row.startDate)
+            : computeYears(row.startDate, row.endDate),
+        };
       })
     );
   };
@@ -187,7 +236,7 @@ const Index = () => {
       if (!row.position.trim()) rowErr.position = "Required";
       if (!row.employer.trim()) rowErr.employer = "Required";
       if (!row.startDate) rowErr.startDate = "Required";
-      if (!row.endDate) rowErr.endDate = "Required";
+      if (!row.isCurrent && !row.endDate) rowErr.endDate = "Required";
       if (Object.keys(rowErr).length) expErrors[row.id] = rowErr;
     });
     if (Object.keys(expErrors).length) newErrors.experience = expErrors;
@@ -208,18 +257,76 @@ const Index = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      setShowSuccess(true);
-    } else {
+    if (!validate()) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields correctly.",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await submitApplication({
+        fullName,
+        email,
+        phone,
+        summary,
+        cv: cv!,
+        jobId: job!.id,
+        experience: experience.map((exp) => ({
+          position: exp.position,
+          description: exp.description,
+          employer: exp.employer,
+          startDate: exp.startDate,
+          endDate: exp.isCurrent ? "" : exp.endDate,
+          isCurrent: exp.isCurrent,
+          years: exp.years,
+        })),
+        education: education.map((edu) => ({
+          qualification: edu.qualification,
+          level: edu.level,
+          field: edu.field,
+          institution: edu.institution,
+          yearCompleted: edu.yearCompleted,
+          accolade: edu.accolade,
+        })),
+      });
+
+      setShowSuccess(true);
+
+      // Reset form after successful submission
+      setFullName("");
+      setEmail("");
+      setPhone("");
+      setSummary("");
+      setCv(null);
+      setExperience([createEmptyExperience()]);
+      setEducation([createEmptyEducation()]);
+      setErrors({});
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
+      toast({
+        title: "Submission Failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (jobLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/30 py-8 px-4">
@@ -230,7 +337,7 @@ const Index = () => {
           </h1>
           <p className="mt-2 text-muted-foreground">
             {job
-              ? `${job.department} · ${job.location} · ${job.type}`
+              ? [job.department, job.location].filter(Boolean).join(" · ")
               : "Fill in the form below to apply for this position."}
           </p>
           {job && (
@@ -399,13 +506,21 @@ const Index = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label>End Date *</Label>
+                      <Label>End Date {!row.isCurrent && <span className="text-destructive">*</span>}</Label>
                       <Input
                         type="month"
                         value={row.endDate}
+                        disabled={row.isCurrent}
                         onChange={(e) => updateExperience(row.id, "endDate", e.target.value)}
                         className={errors.experience?.[row.id]?.endDate ? "border-destructive" : ""}
                       />
+                      <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+                        <Checkbox
+                          checked={row.isCurrent}
+                          onCheckedChange={() => toggleIsCurrent(row.id)}
+                        />
+                        Current position
+                      </label>
                     </div>
                     <div className="space-y-1">
                       <Label>Years</Label>
@@ -481,9 +596,9 @@ const Index = () => {
                           <SelectValue placeholder="Select level" />
                         </SelectTrigger>
                         <SelectContent>
-                          {EDUCATION_LEVELS.map((lvl) => (
-                            <SelectItem key={lvl} value={lvl}>
-                              {lvl}
+                          {EDUCATION_LEVELS.map(({ key, label }) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -569,8 +684,15 @@ const Index = () => {
 
           {/* Submit */}
           <div className="flex justify-end">
-            <Button type="submit" size="lg" className="px-10">
-              Apply
+            <Button type="submit" size="lg" className="px-10" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                "Apply"
+              )}
             </Button>
           </div>
         </form>

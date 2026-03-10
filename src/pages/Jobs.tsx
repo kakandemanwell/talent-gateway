@@ -1,18 +1,22 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { jobs } from "@/data/jobs";
-import { Briefcase, MapPin, Clock, Calendar, ArrowRight } from "lucide-react";
-
-const typeColorMap: Record<string, string> = {
-  "Full-time": "bg-primary/10 text-primary border-primary/20",
-  "Part-time": "bg-accent text-accent-foreground",
-  Contract: "bg-secondary text-secondary-foreground",
-  Remote: "bg-primary/10 text-primary border-primary/20",
-};
+import { Briefcase, MapPin, Calendar, ArrowRight, Loader2 } from "lucide-react";
+import { fetchActiveJobs, type Job } from "@/lib/jobService";
 
 const Jobs = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchActiveJobs()
+      .then(setJobs)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load jobs."))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="min-h-screen bg-muted/30 py-8 px-4">
       <div className="mx-auto max-w-4xl">
@@ -25,6 +29,24 @@ const Jobs = () => {
           </p>
         </div>
 
+        {loading && (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/5 p-4 text-center text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && jobs.length === 0 && (
+          <div className="py-16 text-center text-muted-foreground">
+            No open positions at this time. Please check back soon.
+          </div>
+        )}
+
         <div className="space-y-4">
           {jobs.map((job) => (
             <Link key={job.id} to={`/jobs/${job.id}`} className="block group">
@@ -35,26 +57,34 @@ const Jobs = () => {
                       {job.title}
                     </h2>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Briefcase className="h-3.5 w-3.5" />
-                        {job.department}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {job.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        Closes {job.closingDate}
-                      </span>
+                      {job.department && (
+                        <span className="flex items-center gap-1">
+                          <Briefcase className="h-3.5 w-3.5" />
+                          {job.department}
+                        </span>
+                      )}
+                      {job.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {job.location}
+                        </span>
+                      )}
+                      {job.closing_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          Closes {job.closing_date}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {job.summary}
-                    </p>
+                    {job.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {job.description.replace(/<[^>]*>/g, " ").trim()}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <Badge variant="outline" className={typeColorMap[job.type] ?? ""}>
-                      {job.type}
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                      {job.department ?? "Position"}
                     </Badge>
                     <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
