@@ -30,6 +30,8 @@ export interface ApplicationPayload {
   cv: File;
   experience: ExperiencePayload[];
   education: EducationPayload[];
+  /** UUID of the jobs row this application is for. */
+  jobId: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -86,6 +88,8 @@ export async function submitApplication(
       phone: payload.phone,
       summary: payload.summary,
       status: "new",
+      job_id: payload.jobId,
+      gateway_sync_status: "new",
     })
     .select("id")
     .single();

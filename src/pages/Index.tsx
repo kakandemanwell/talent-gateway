@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { jobs } from "@/data/jobs";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { fetchJobById, type Job } from "@/lib/jobService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,7 +110,24 @@ const createEmptyEducation = (): EducationRow => ({
 
 const Index = () => {
   const { jobId } = useParams<{ jobId: string }>();
-  const job = jobId ? jobs.find((j) => j.id === jobId) : null;
+  const navigate = useNavigate();
+  const [job, setJob] = useState<Job | null>(null);
+  const [jobLoading, setJobLoading] = useState(!!jobId);
+
+  useEffect(() => {
+    if (!jobId) {
+      navigate("/jobs", { replace: true });
+      return;
+    }
+    fetchJobById(jobId)
+      .then((data) => {
+        if (!data) navigate("/jobs", { replace: true });
+        else setJob(data);
+      })
+      .catch(() => navigate("/jobs", { replace: true }))
+      .finally(() => setJobLoading(false));
+  }, [jobId, navigate]);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -229,6 +246,7 @@ const Index = () => {
         phone,
         summary,
         cv: cv!,
+        jobId: job!.id,
         experience: experience.map((exp) => ({
           position: exp.position,
           description: exp.description,
@@ -271,6 +289,14 @@ const Index = () => {
     }
   };
 
+  if (jobLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30 py-8 px-4">
       <div className="mx-auto max-w-4xl">
@@ -280,7 +306,7 @@ const Index = () => {
           </h1>
           <p className="mt-2 text-muted-foreground">
             {job
-              ? `${job.department} · ${job.location} · ${job.type}`
+              ? [job.department, job.location].filter(Boolean).join(" · ")
               : "Fill in the form below to apply for this position."}
           </p>
           {job && (
