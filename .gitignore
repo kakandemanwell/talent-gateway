@@ -26,3 +26,8 @@ dist-ssr
 
 .env
 recruitment_gateway/
+
+# TLS certificates (self-signed or production — never commit private keys)
+docker/nginx/certs/*.pem
+docker/nginx/certs/*.key
+docker/nginx/certs/*.crt

@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync, FastifyRequest } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import sql from "../db.js";
 import { presignFile } from "../storage.js";
 import { bearerAuth } from "../middleware/bearerAuth.js";
@@ -73,13 +73,10 @@ const odooApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
   // Query params:
   //   job_ids  — comma-separated list of odoo_job_id values e.g. "OD-1,OD-5"
   //   status   — gateway_sync_status filter, defaults to "new"
-  fastify.get(
+  fastify.get<{ Querystring: { job_ids?: string; status?: string } }>(
     "/functions/v1/odoo-get-applications",
     { preHandler: bearerAuth },
-    async (
-      request: FastifyRequest<{ Querystring: { job_ids?: string; status?: string } }>,
-      reply
-    ) => {
+    async (request, reply) => {
       const { job_ids: jobIdsParam, status: statusFilter = "new" } =
         request.query;
 

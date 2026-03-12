@@ -1,0 +1,9 @@
+# This directory holds TLS certificates.
+# For local dev: generate a self-signed cert —
+#   docker run --rm -v "$PWD/docker/nginx/certs:/certs" alpine/openssl \
+#     req -x509 -nodes -days 3650 -newkey rsa:2048 \
+#     -keyout /certs/privkey.pem -out /certs/fullchain.pem \
+#     -subj "/CN=localhost"
+#
+# For production: place your real privkey.pem and fullchain.pem here
+# (e.g. from Let's Encrypt / Certbot) before starting the nginx container.

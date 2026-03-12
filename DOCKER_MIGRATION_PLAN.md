@@ -452,14 +452,29 @@ No Odoo Python model changes. No request body changes. No header changes.
 - [ ] **Step 5** — `api/src/db.ts` — postgres.js pool
 - [ ] **Step 6** — `api/src/storage.ts` — MinIO client, bucket-ensure, presignHelper
 - [ ] **Step 7** — `api/src/middleware/bearerAuth.ts`
-- [ ] **Step 8** — `api/src/routes/odooJobs.ts` — port `odoo-get-jobs` + `odoo-push-job`
-- [ ] **Step 9** — `api/src/routes/odooApplications.ts` — port `odoo-get-applications` + `odoo-patch-application`
-- [ ] **Step 10** — `api/src/routes/publicJobs.ts`
-- [ ] **Step 11** — `api/src/routes/publicApplications.ts` (multipart upload)
-- [ ] **Step 12** — `api/src/index.ts` — wire all routes
-- [ ] **Step 13** — Frontend: remove `@supabase/supabase-js`, add `api.ts`, rewrite `jobService.ts` + `applicationService.ts`
-- [ ] **Step 14** — `talent-gateway/Dockerfile` + `docker/nginx-frontend.conf`
-- [ ] **Step 15** — `docker/nginx/nginx.conf` (reverse proxy)
-- [ ] **Step 16** — `docker compose up --build` local smoke test
-- [ ] **Step 17** — Update Odoo `GATEWAY_BASE_URL`
-- [ ] **Step 18** — Tag `v1.0.0-docker`, open PR to `main`
+- [x] **Step 8** — `api/src/routes/odooJobs.ts` — port `odoo-get-jobs` + `odoo-push-job`
+- [x] **Step 9** — `api/src/routes/odooApplications.ts` — port `odoo-get-applications` + `odoo-patch-application`
+- [x] **Step 10** — `api/src/routes/publicJobs.ts`
+- [x] **Step 11** — `api/src/routes/publicApplications.ts` (multipart upload)
+- [x] **Step 12** — `api/src/index.ts` — wire all routes
+- [x] **Step 13** — Frontend: remove `@supabase/supabase-js`, add `api.ts`, rewrite `jobService.ts` + `applicationService.ts`
+- [x] **Step 14** — `talent-gateway/Dockerfile` + `docker/nginx-frontend.conf`
+- [x] **Step 15** — `docker/nginx/nginx.conf` (reverse proxy)
+- [x] **Step 16** — `docker compose up --build` local smoke test  
+  _Smoke test results (2026-03-12): HTTP→HTTPS 301 ✅ · `GET /api/jobs` 200 ✅ · Auth gate `HEAD /functions/v1/odoo-get-jobs` 401 ✅ · Frontend SPA 200 ✅_
+- [ ] **Step 17** — Update Odoo `GATEWAY_BASE_URL`  
+  In `odoo_server.md / HR Recruitment module config`, change:
+  ```
+  GATEWAY_BASE_URL = "https://<your-domain>/functions/v1"
+  ```
+  The four paths remain identical to the Supabase POC:
+  - `GET  /functions/v1/odoo-get-jobs`
+  - `POST /functions/v1/odoo-push-job`
+  - `GET  /functions/v1/odoo-get-applications`
+  - `PATCH /functions/v1/odoo-patch-application`
+- [ ] **Step 18** — Tag `v1.0.0-docker`, open PR to `main`  
+  ```bash
+  git tag v1.0.0-docker
+  git push origin feat/docker-self-hosted --tags
+  # Then open PR on GitHub: feat/docker-self-hosted → main
+  ```

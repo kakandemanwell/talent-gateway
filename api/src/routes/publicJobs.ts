@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync, FastifyRequest } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 import sql from "../db.js";
 
 interface JobRow {
@@ -32,12 +32,9 @@ const publicJobsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── GET /api/jobs/:id ─────────────────────────────────────────────────────
   // Returns a single active job by its UUID.
-  fastify.get(
+  fastify.get<{ Params: { id: string } }>(
     "/jobs/:id",
-    async (
-      request: FastifyRequest<{ Params: { id: string } }>,
-      reply
-    ) => {
+    async (request, reply) => {
       const { id } = request.params;
 
       const rows = await sql<JobRow[]>`
