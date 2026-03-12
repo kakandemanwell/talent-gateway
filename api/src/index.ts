@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+import Fastify, { type FastifyError, type FastifyRequest, type FastifyReply } from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { ensureBucket } from "./storage.js";
@@ -33,7 +33,7 @@ await app.register(multipart, {
 });
 
 // ── Global error handler ──────────────────────────────────────────────────────
-app.setErrorHandler((error, _request, reply) => {
+app.setErrorHandler((error: FastifyError, _request: FastifyRequest, reply: FastifyReply) => {
   app.log.error(error);
   const status = error.statusCode ?? 500;
   reply.status(status).send({ error: error.message ?? "Internal server error" });

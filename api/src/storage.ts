@@ -1,4 +1,5 @@
 import { Client as MinioClient } from "minio";
+import { Readable } from "stream";
 
 const BUCKET = "application-files";
 const SIGNED_URL_TTL = 86400; // 24 hours — matches Supabase POC TTL
@@ -44,7 +45,7 @@ export async function ensureBucket(): Promise<void> {
  */
 export async function uploadFile(
   objectPath: string,
-  stream: NodeJS.ReadableStream | Buffer,
+  stream: Readable | Buffer,
   contentType: string,
   size?: number
 ): Promise<string> {
