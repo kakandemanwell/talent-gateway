@@ -1,8 +1,8 @@
-import { supabase } from "@/lib/supabase";
+import { API_BASE } from "@/lib/api";
 
 export interface Job {
-  id: string;          // Supabase UUID
-  odoo_job_id: string; // "OD-{hr.job.id}"
+  id: string;           // PostgreSQL UUID
+  odoo_job_id: string;  // "OD-{hr.job.id}"
   title: string;
   department: string | null;
   location: string | null;
@@ -15,44 +15,24 @@ export interface Job {
 
 /**
  * Fetch all currently active, non-expired jobs for the public portal.
- * Matches the RLS policy: is_active = true AND closing_date >= today (or null).
+ * The API applies: is_active = true AND closing_date >= today (or null).
  */
 export async function fetchActiveJobs(): Promise<Job[]> {
-  const today = new Date().toISOString().split("T")[0];
-
-  const { data, error } = await supabase
-    .from("jobs")
-    .select(
-      "id, odoo_job_id, title, department, location, closing_date, description, is_active, created_at, updated_at"
-    )
-    .eq("is_active", true)
-    .or(`closing_date.is.null,closing_date.gte.${today}`)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(`Failed to fetch jobs: ${error.message}`);
+  const res = await fetch(`${API_BASE}/jobs`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch jobs: ${res.status} ${res.statusText}`);
   }
-
-  return data ?? [];
+  return res.json() as Promise<Job[]>;
 }
 
 /**
- * Fetch a single job by its Supabase UUID.
+ * Fetch a single active job by its UUID.
  */
 export async function fetchJobById(id: string): Promise<Job | null> {
-  const { data, error } = await supabase
-    .from("jobs")
-    .select(
-      "id, odoo_job_id, title, department, location, closing_date, description, is_active, created_at, updated_at"
-    )
-    .eq("id", id)
-    .eq("is_active", true)
-    .single();
-
-  if (error) {
-    if (error.code === "PGRST116") return null; // not found
-    throw new Error(`Failed to fetch job: ${error.message}`);
+  const res = await fetch(`${API_BASE}/jobs/${encodeURIComponent(id)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`Failed to fetch job: ${res.status} ${res.statusText}`);
   }
-
-  return data;
+  return res.json() as Promise<Job>;
 }
