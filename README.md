@@ -1,4 +1,4 @@
-# Talent Gateway
+# EPRC Jobs Portal
 
 ## Getting Started
 
@@ -6,7 +6,7 @@
 
 ```bash
 git clone <repository-url>
-cd talent-gateway
+cd eprc-jobs-portal
 ```
 
 ### 2. Install Dependencies
