@@ -58,6 +58,7 @@ services:
       MINIO_USE_SSL:       "false"
       MINIO_ROOT_USER:     ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_PUBLIC_URL:    ${MINIO_PUBLIC_URL:-}
       ODOO_API_KEY:        ${ODOO_API_KEY}
       ALLOWED_ORIGIN:      ${ALLOWED_ORIGIN}
       PORT:                3000
@@ -72,11 +73,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
     restart: unless-stopped
     networks:
       - internal
-    expose:
-      - "80"
+    ports:
+      - "0.0.0.0:8080:80"
 
   # ── Nginx (reverse proxy + TLS termination) ─────────────────────────────────
   nginx:
