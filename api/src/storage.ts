@@ -1,13 +1,13 @@
 import { Client as MinioClient } from "minio";
 import { Readable } from "stream";
 
-const BUCKET = "application-files";
-const SIGNED_URL_TTL = 86400; // 24 hours — matches Supabase POC TTL
+export const BUCKET = "application-files";
+const SIGNED_URL_TTL = 86400; // 24 hours — used only when no public URL is configured
 
-// When set, presigned URLs are rewritten to use this public base URL so that
-// remote servers (e.g. Odoo on a different network) can actually reach the files.
-// nginx proxies /application-files/ → minio:9000 and passes Host: minio:9000,
-// so the HMAC presigned-URL signature remains valid.
+// When set, file URLs returned to Odoo point to the portal's own file-proxy
+// endpoint (/functions/v1/files/*) instead of directly to MinIO.
+// The API streams the file from MinIO internally — Odoo never needs to reach
+// MinIO across the network. Set to the portal's public HTTPS base URL.
 // Example: https://jobs.eprc.example.com
 const MINIO_PUBLIC_URL = process.env.MINIO_PUBLIC_URL?.replace(/\/$/, "") || null;
 
@@ -48,15 +48,21 @@ export async function ensureBucket(): Promise<void> {
 
 /**
  * Upload a readable stream (or Buffer) to MinIO.
+ * Pass originalFilename to preserve the submitter's filename in the
+ * file-proxy Content-Disposition header on download.
  * Returns the stored object path (relative to bucket root).
  */
 export async function uploadFile(
   objectPath: string,
   stream: Readable | Buffer,
   contentType: string,
-  size?: number
+  size?: number,
+  originalFilename?: string
 ): Promise<string> {
-  const metaData = { "Content-Type": contentType };
+  const metaData: Record<string, string> = { "Content-Type": contentType };
+  if (originalFilename) {
+    metaData["original-filename"] = originalFilename;
+  }
   if (Buffer.isBuffer(stream)) {
     await minio.putObject(BUCKET, objectPath, stream, stream.length, metaData);
   } else {
@@ -72,28 +78,44 @@ export async function uploadFile(
 }
 
 /**
- * Generate a presigned GET URL valid for 24 hours.
- * Returns the same shape as the Supabase edge function:
- *   { signedUrl: string; expiresAt: string }
- * Returns null if the path is empty or signing fails.
+ * Return a URL for downloading a stored file.
+ *
+ * When MINIO_PUBLIC_URL is set (production/staging):
+ *   Returns a portal file-proxy URL: {PUBLIC_URL}/functions/v1/files/{objectPath}
+ *   The API streams the file from MinIO internally — the caller never reaches
+ *   MinIO directly. No expiry; bearer auth on the proxy endpoint is the gate.
+ *
+ * When MINIO_PUBLIC_URL is not set (local dev):
+ *   Falls back to a direct MinIO presigned URL valid for 24 hours.
+ *
+ * Returns the same shape as the old presignFile helper so all call-sites are
+ * unchanged. expiresAt is null for proxy URLs (they don't expire).
  */
 export async function presignFile(
   objectPath: string | null | undefined
-): Promise<{ signedUrl: string; expiresAt: string } | null> {
+): Promise<{ signedUrl: string; expiresAt: string | null } | null> {
   if (!objectPath) return null;
+
+  if (MINIO_PUBLIC_URL) {
+    // Encode each path segment (handles spaces/special chars) but keep "/" as
+    // path separators so Fastify routes the wildcard correctly.
+    const encodedPath = objectPath
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/");
+    return {
+      signedUrl: `${MINIO_PUBLIC_URL}/functions/v1/files/${encodedPath}`,
+      expiresAt: null,
+    };
+  }
+
+  // Local dev fallback — direct MinIO presigned URL
   try {
-    const internalUrl = await minio.presignedGetObject(
-      BUCKET,
-      objectPath,
-      SIGNED_URL_TTL
-    );
-    // Rewrite internal MinIO host (e.g. http://minio:9000) to the public-facing
-    // domain so that Odoo and other remote servers can download the file.
-    const signedUrl = MINIO_PUBLIC_URL
-      ? internalUrl.replace(/^https?:\/\/[^/]+/, MINIO_PUBLIC_URL)
-      : internalUrl;
-    const expiresAt = new Date(Date.now() + SIGNED_URL_TTL * 1000).toISOString();
-    return { signedUrl, expiresAt };
+    const url = await minio.presignedGetObject(BUCKET, objectPath, SIGNED_URL_TTL);
+    return {
+      signedUrl: url,
+      expiresAt: new Date(Date.now() + SIGNED_URL_TTL * 1000).toISOString(),
+    };
   } catch (err) {
     console.warn(`[storage] Failed to presign ${objectPath}:`, err);
     return null;

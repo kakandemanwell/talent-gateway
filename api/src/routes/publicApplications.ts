@@ -139,7 +139,9 @@ const publicApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
       const storedCvPath = await uploadFile(
         cvPath,
         cvFile.buffer,
-        cvFile.mimetype
+        cvFile.mimetype,
+        undefined,
+        cvFile.filename  // preserved in object metadata for Content-Disposition
       );
 
       // ── Step 3: Update application with CV path ───────────────────────────
@@ -175,7 +177,9 @@ const publicApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
               accoladeFilePath = await uploadFile(
                 accoladePath,
                 accoladeFile.buffer,
-                accoladeFile.mimetype
+                accoladeFile.mimetype,
+                undefined,
+                accoladeFile.filename  // preserved for Content-Disposition
               );
             }
             return {

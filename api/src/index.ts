@@ -4,6 +4,7 @@ import multipart from "@fastify/multipart";
 import { ensureBucket } from "./storage.js";
 import odooJobsRoutes from "./routes/odooJobs.js";
 import odooApplicationsRoutes from "./routes/odooApplications.js";
+import fileProxyRoutes from "./routes/fileProxy.js";
 import publicJobsRoutes from "./routes/publicJobs.js";
 import publicApplicationsRoutes from "./routes/publicApplications.js";
 
@@ -45,6 +46,7 @@ app.get("/health", async () => ({ status: "ok" }));
 // ── Odoo gateway routes (exact paths preserved from Supabase edge functions) ──
 await app.register(odooJobsRoutes);
 await app.register(odooApplicationsRoutes);
+await app.register(fileProxyRoutes);
 
 // ── Public routes (frontend → API) ────────────────────────────────────────────
 await app.register(publicJobsRoutes, { prefix: "/api" });
