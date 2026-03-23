@@ -69,72 +69,127 @@ function padToFullDate(value: string | null | undefined): string | null {
 const odooApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
   // ── GET /functions/v1/odoo-get-applications ──────────────────────────────
   // Called by Odoo daily cron (5 PM EAT) or on-demand.
-  // Returns unimported applications (by gateway_sync_status) with signed file URLs.
+  // Returns applications with signed file URLs.
+  //
   // Query params:
-  //   job_ids  — comma-separated list of odoo_job_id values e.g. "OD-1,OD-5"
-  //   status   — gateway_sync_status filter, defaults to "new"
-  fastify.get<{ Querystring: { job_ids?: string; status?: string } }>(
+  //   job_ids          — comma-separated odoo_job_id values e.g. "OD-1,OD-5"
+  //                      Required unless application_refs is supplied.
+  //   status           — gateway_sync_status filter, defaults to "new".
+  //                      Ignored when application_refs is present.
+  //   application_refs — comma-separated application UUIDs (portal primary keys).
+  //                      When present, bypasses job_ids/status entirely and
+  //                      returns those specific records with fresh presigned URLs.
+  //                      Used by Odoo's retry workflow to refresh expired URLs.
+  fastify.get<{
+    Querystring: { job_ids?: string; status?: string; application_refs?: string };
+  }>(
     "/functions/v1/odoo-get-applications",
     { preHandler: bearerAuth },
     async (request, reply) => {
-      const { job_ids: jobIdsParam, status: statusFilter = "new" } =
-        request.query;
+      const {
+        job_ids: jobIdsParam,
+        status: statusFilter = "new",
+        application_refs: appRefsParam,
+      } = request.query;
 
-      if (!jobIdsParam) {
-        return reply
-          .status(422)
-          .send({ error: "job_ids query parameter is required" });
+      let apps: ApplicationRow[];
+      let jobMap: Record<string, { odoo_job_id: string; closing_date: string | null }>;
+
+      if (appRefsParam) {
+        // ── application_refs mode: fetch by UUID, bypass status filter ──────
+        const applicationRefs = appRefsParam
+          .split(",")
+          .map((r) => r.trim())
+          .filter(Boolean);
+
+        if (applicationRefs.length === 0) {
+          return reply
+            .status(422)
+            .send({ error: "application_refs must contain at least one value" });
+        }
+
+        apps = await sql<ApplicationRow[]>`
+          SELECT id, job_id, full_name, email, phone, summary, cv_file_path,
+                 gateway_sync_status, created_at
+          FROM applications
+          WHERE id = ANY(${applicationRefs})
+        `;
+
+        if (apps.length === 0) {
+          return reply.send({
+            applications: [],
+            total: 0,
+            fetched_at: new Date().toISOString(),
+          });
+        }
+
+        // Resolve job metadata from the apps' own job_id values
+        const jobUuids = [...new Set(apps.map((a) => a.job_id))];
+        const jobRows = await sql<JobRow[]>`
+          SELECT id, odoo_job_id, closing_date
+          FROM jobs
+          WHERE id = ANY(${jobUuids})
+        `;
+        jobMap = Object.fromEntries(
+          jobRows.map((j) => [j.id, { odoo_job_id: j.odoo_job_id, closing_date: j.closing_date }])
+        );
+      } else {
+        // ── Normal mode: filter by job_ids + gateway_sync_status ─────────────
+        if (!jobIdsParam) {
+          return reply
+            .status(422)
+            .send({ error: "job_ids query parameter is required" });
+        }
+
+        const odooJobIds = jobIdsParam
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+        if (odooJobIds.length === 0) {
+          return reply
+            .status(422)
+            .send({ error: "job_ids must contain at least one value" });
+        }
+
+        // ── Resolve odoo_job_id values → internal UUIDs ────────────────────
+        const jobRows = await sql<JobRow[]>`
+          SELECT id, odoo_job_id, closing_date
+          FROM jobs
+          WHERE odoo_job_id = ANY(${odooJobIds})
+        `;
+
+        if (jobRows.length === 0) {
+          return reply.send({
+            applications: [],
+            total: 0,
+            fetched_at: new Date().toISOString(),
+          });
+        }
+
+        const jobUuids = jobRows.map((j) => j.id);
+        jobMap = Object.fromEntries(
+          jobRows.map((j) => [j.id, { odoo_job_id: j.odoo_job_id, closing_date: j.closing_date }])
+        );
+
+        apps = await sql<ApplicationRow[]>`
+          SELECT id, job_id, full_name, email, phone, summary, cv_file_path,
+                 gateway_sync_status, created_at
+          FROM applications
+          WHERE job_id = ANY(${jobUuids})
+            AND gateway_sync_status = ${statusFilter}
+        `;
+
+        if (apps.length === 0) {
+          return reply.send({
+            applications: [],
+            total: 0,
+            fetched_at: new Date().toISOString(),
+          });
+        }
       }
 
-      const odooJobIds = jobIdsParam
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      if (odooJobIds.length === 0) {
-        return reply
-          .status(422)
-          .send({ error: "job_ids must contain at least one value" });
-      }
-
-      // ── Resolve odoo_job_id values → internal UUIDs ──────────────────────
-      const jobRows = await sql<JobRow[]>`
-        SELECT id, odoo_job_id, closing_date
-        FROM jobs
-        WHERE odoo_job_id = ANY(${odooJobIds})
-      `;
-
-      if (jobRows.length === 0) {
-        return reply.send({
-          applications: [],
-          total: 0,
-          fetched_at: new Date().toISOString(),
-        });
-      }
-
-      const jobUuids = jobRows.map((j) => j.id);
-      const jobMap = Object.fromEntries(
-        jobRows.map((j) => [j.id, { odoo_job_id: j.odoo_job_id, closing_date: j.closing_date }])
-      );
-
-      // ── Fetch applications ────────────────────────────────────────────────
-      const apps = await sql<ApplicationRow[]>`
-        SELECT id, job_id, full_name, email, phone, summary, cv_file_path,
-               gateway_sync_status, created_at
-        FROM applications
-        WHERE job_id = ANY(${jobUuids})
-          AND gateway_sync_status = ${statusFilter}
-      `;
-
-      if (apps.length === 0) {
-        return reply.send({
-          applications: [],
-          total: 0,
-          fetched_at: new Date().toISOString(),
-        });
-      }
-
-      // ── Bulk-fetch experience + education for all returned applications ──
+      // ── Bulk-fetch experience + education for all returned applications ─────
       const appIds = apps.map((a) => a.id);
 
       const [experiences, educations] = await Promise.all([
