@@ -30,7 +30,7 @@ const JobDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <div className="flex items-center justify-center py-16">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -38,7 +38,7 @@ const JobDetail = () => {
 
   if (error === "not_found" || !job) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <div className="flex items-center justify-center py-16">
         <Card className="max-w-md w-full text-center p-8">
           <h2 className="text-xl font-semibold text-foreground mb-2">Job Not Found</h2>
           <p className="text-muted-foreground mb-4">
@@ -54,7 +54,7 @@ const JobDetail = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+      <div className="flex items-center justify-center py-16">
         <Card className="max-w-md w-full text-center p-8">
           <h2 className="text-xl font-semibold text-foreground mb-2">Could Not Load Job</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
@@ -67,7 +67,7 @@ const JobDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 py-8 px-4">
+    <div className="py-8 px-4">
       <div className="mx-auto max-w-3xl">
         <Button
           variant="ghost"

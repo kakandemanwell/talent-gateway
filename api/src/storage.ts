@@ -4,6 +4,13 @@ import { Readable } from "stream";
 const BUCKET = "application-files";
 const SIGNED_URL_TTL = 86400; // 24 hours — matches Supabase POC TTL
 
+// When set, presigned URLs are rewritten to use this public base URL so that
+// remote servers (e.g. Odoo on a different network) can actually reach the files.
+// nginx proxies /application-files/ → minio:9000 and passes Host: minio:9000,
+// so the HMAC presigned-URL signature remains valid.
+// Example: https://jobs.eprc.example.com
+const MINIO_PUBLIC_URL = process.env.MINIO_PUBLIC_URL?.replace(/\/$/, "") || null;
+
 const endpoint = process.env.MINIO_ENDPOINT;
 const port = parseInt(process.env.MINIO_PORT ?? "9000", 10);
 const useSSL = process.env.MINIO_USE_SSL === "true";
@@ -75,11 +82,16 @@ export async function presignFile(
 ): Promise<{ signedUrl: string; expiresAt: string } | null> {
   if (!objectPath) return null;
   try {
-    const signedUrl = await minio.presignedGetObject(
+    const internalUrl = await minio.presignedGetObject(
       BUCKET,
       objectPath,
       SIGNED_URL_TTL
     );
+    // Rewrite internal MinIO host (e.g. http://minio:9000) to the public-facing
+    // domain so that Odoo and other remote servers can download the file.
+    const signedUrl = MINIO_PUBLIC_URL
+      ? internalUrl.replace(/^https?:\/\/[^/]+/, MINIO_PUBLIC_URL)
+      : internalUrl;
     const expiresAt = new Date(Date.now() + SIGNED_URL_TTL * 1000).toISOString();
     return { signedUrl, expiresAt };
   } catch (err) {

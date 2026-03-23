@@ -18,7 +18,7 @@ const Jobs = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-muted/30 py-8 px-4">
+    <div className="py-8 px-4">
       <div className="mx-auto max-w-4xl">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
