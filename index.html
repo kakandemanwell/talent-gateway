@@ -32,11 +32,30 @@
         --clb-subtitles-text-transform: uppercase;
         --clb-subtitles-color: #22a5d8;
       }
-      .site-footer { background-color: #003249; }
-      .site-footer a:not(.-unlink) { color: #ffffff; }
+      /* Footer */
+      .site-footer { background-color: #003249; color: #ffffff; }
+      .site-footer p, .site-footer li, .site-footer address,
+      .site-footer h3, .site-footer h6,
+      .site-footer .widget-title, .site-footer .wp-block-heading { color: #ffffff !important; }
+      .site-footer a, .site-footer a:visited,
+      .site-footer a:not(.-unlink) { color: #ffffff !important; text-decoration: none; }
+      .site-footer a:hover { opacity: 0.8; }
       .site-footer-copyright { background-color: #003249; }
       .site-footer-copyright .holder { color: #ffffff; }
       .site-footer-copyright .holder a:not(.-unlink) { color: #ffffff; }
+
+      /* Social links: horizontal row with white icons */
+      .wp-block-social-links { display: flex !important; flex-direction: row !important; flex-wrap: wrap; gap: 8px; padding-left: 0; list-style: none; }
+      .wp-block-social-links li { display: flex; }
+      .wp-block-social-link-anchor { display: flex; align-items: center; justify-content: center; color: #ffffff !important; }
+      .wp-block-social-link-anchor svg { fill: #ffffff !important; }
+
+      /* Subscribe button: stack below email input with gap */
+      .email-wrap { display: flex; flex-direction: column; }
+      .email-wrap button[type="submit"] { margin-top: 10px; }
+
+      /* Nav dropdown chevron */
+      .mega-menu-link .mega-indicator { display: inline-block; margin-left: 5px; vertical-align: middle; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; position: relative; top: 1px; }
       .header:not(.-sticky) { background-color: #ffffff; }
       .header.-sticky:not(.header-8) { background-color: #ffffff; }
       .subheader { background-color: #003249; }

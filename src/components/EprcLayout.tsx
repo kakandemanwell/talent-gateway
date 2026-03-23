@@ -48,7 +48,7 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                 </button>
               </div>
               <div className="branding">
-                <a className="branding-title titles-typo -undash -unlink" href="https://eprcug.org/" rel="home">
+                <a className="branding-title titles-typo -undash -unlink" href="https://eprcug.org/" rel="home noreferrer" target="_blank">
                   <div className="logo-sticky" style={{ display: "flex" }}>
                     <img
                       src="https://eprcug.org/wp-content/uploads/2020/08/logo.png"
@@ -85,54 +85,54 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                         <ul id="mega-menu-primary" className="mega-menu max-mega-menu mega-menu-horizontal">
 
                           <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
-                            <a className="mega-menu-link" href="https://eprcug.org/">Home</a>
+                            <a className="mega-menu-link" href="https://eprcug.org/" target="_blank" rel="noreferrer">Home</a>
                           </li>
 
                           <li className="mega-menu-item mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/publication/">Publications</a>
+                            <a className="mega-menu-link" href="https://eprcug.org/publication/" target="_blank" rel="noreferrer">Publications</a>
                           </li>
 
                           <li className="mega-menu-item mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/research/">Research</a>
+                            <a className="mega-menu-link" href="https://eprcug.org/research/" target="_blank" rel="noreferrer">Research</a>
                           </li>
 
                           <li className="mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/projects/">
+                            <a className="mega-menu-link" href="https://eprcug.org/projects/" target="_blank" rel="noreferrer">
                               Projects<span className="mega-indicator" aria-hidden="true"></span>
                             </a>
                             <ul className="mega-sub-menu">
                               <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/new-projects/">New Projects</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/projects/new-projects/" target="_blank" rel="noreferrer">New Projects</a>
                               </li>
                               <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/ongoing-projects/">Ongoing Projects</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/projects/ongoing-projects/" target="_blank" rel="noreferrer">Ongoing Projects</a>
                               </li>
                               <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/completed-projects/">Completed Projects</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/projects/completed-projects/" target="_blank" rel="noreferrer">Completed Projects</a>
                               </li>
                             </ul>
                           </li>
 
                           <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
-                            <a className="mega-menu-link" href="https://eprcug.org/blogs/">Blogs</a>
+                            <a className="mega-menu-link" href="https://eprcug.org/blogs/" target="_blank" rel="noreferrer">Blogs</a>
                           </li>
 
                           <li className="mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/media-centre/">
+                            <a className="mega-menu-link" href="https://eprcug.org/media-centre/" target="_blank" rel="noreferrer">
                               Media Centre<span className="mega-indicator" aria-hidden="true"></span>
                             </a>
                             <ul className="mega-sub-menu">
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-highlights/">EPRC Highlights</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-highlights/" target="_blank" rel="noreferrer">EPRC Highlights</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-in-the-news/">EPRC In The News</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-in-the-news/" target="_blank" rel="noreferrer">EPRC In The News</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/press-releases/">Press Releases</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/press-releases/" target="_blank" rel="noreferrer">Press Releases</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/gallery/">Gallery</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/gallery/" target="_blank" rel="noreferrer">Gallery</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
                                 <a className="mega-menu-link" href="https://www.youtube.com/@EprcugOrgUganda/videos" target="_blank" rel="noreferrer">Videos</a>
@@ -141,39 +141,39 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                           </li>
 
                           <li className="mega-menu-item mega-current-menu-ancestor mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/about/">
+                            <a className="mega-menu-link" href="https://eprcug.org/about/" target="_blank" rel="noreferrer">
                               About<span className="mega-indicator" aria-hidden="true"></span>
                             </a>
                             <ul className="mega-sub-menu">
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/board-of-directors/">Board of Directors</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/board-of-directors/" target="_blank" rel="noreferrer">Board of Directors</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-management/">EPRC Management</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-management/" target="_blank" rel="noreferrer">EPRC Management</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/staff/">Staff</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/staff/" target="_blank" rel="noreferrer">Staff</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-partners/">EPRC Partners</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-partners/" target="_blank" rel="noreferrer">EPRC Partners</a>
                               </li>
                               <li className="mega-current-menu-item" style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/careers/" aria-current="page">Careers</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/careers/" target="_blank" rel="noreferrer" aria-current="page">Careers</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/opportunities/">Opportunities</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/opportunities/" target="_blank" rel="noreferrer">Opportunities</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/procurements/">Procurements</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/procurements/" target="_blank" rel="noreferrer">Procurements</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/faqs/">FAQs</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/faqs/" target="_blank" rel="noreferrer">FAQs</a>
                               </li>
                             </ul>
                           </li>
 
                           <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
-                            <a className="mega-menu-link" href="https://eprcug.org/contact/">Contact</a>
+                            <a className="mega-menu-link" href="https://eprcug.org/contact/" target="_blank" rel="noreferrer">Contact</a>
                           </li>
 
                         </ul>
@@ -259,13 +259,13 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
             <div className="vc_col-md-3 vc_col-sm-6 widgets-column">
               <ul>
                 <li className="widget widget_block"><h6 className="wp-block-heading">Our Work</h6></li>
-                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/annual-reports/">Annual Reports</a></p></li>
-                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/books">Books/Book Chapters</a></p></li>
-                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/policy-notes/">Policy Notes</a></p></li>
-                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publication/">Publications</a></p></li>
-                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/research/">Research &amp; Data</a></p></li>
-                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publication/impact-stories/">Impact Stories</a></p></li>
-                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/media-centre/">News &amp; Media</a></p></li>
+                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/annual-reports/" target="_blank" rel="noreferrer">Annual Reports</a></p></li>
+                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/books" target="_blank" rel="noreferrer">Books/Book Chapters</a></p></li>
+                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/policy-notes/" target="_blank" rel="noreferrer">Policy Notes</a></p></li>
+                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publication/" target="_blank" rel="noreferrer">Publications</a></p></li>
+                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/research/" target="_blank" rel="noreferrer">Research &amp; Data</a></p></li>
+                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publication/impact-stories/" target="_blank" rel="noreferrer">Impact Stories</a></p></li>
+                <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/media-centre/" target="_blank" rel="noreferrer">News &amp; Media</a></p></li>
               </ul>
             </div>
 
@@ -284,7 +284,7 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                 <li className="widget widget_block">
                   <ul className="wp-block-social-links is-layout-flex wp-block-social-links-is-layout-flex">
                     <li className="wp-social-link wp-social-link-facebook wp-block-social-link">
-                      <a href="https://www.facebook.com/EPRCUganda/" className="wp-block-social-link-anchor">
+                      <a href="https://www.facebook.com/EPRCUganda/" className="wp-block-social-link-anchor" target="_blank" rel="noreferrer">
                         <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                           <path d="M12 2C6.5 2 2 6.5 2 12c0 5 3.7 9.1 8.4 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.3v7C18.3 21.1 22 17 22 12c0-5.5-4.5-10-10-10z" />
                         </svg>
@@ -292,7 +292,7 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                       </a>
                     </li>
                     <li className="wp-social-link wp-social-link-x wp-block-social-link">
-                      <a href="https://twitter.com/EPRC_official" className="wp-block-social-link-anchor">
+                      <a href="https://twitter.com/EPRC_official" className="wp-block-social-link-anchor" target="_blank" rel="noreferrer">
                         <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                           <path d="M13.982 10.622 20.54 3h-1.554l-5.693 6.618L8.745 3H3.5l6.876 10.007L3.5 21h1.554l6.012-6.989L15.868 21h5.245l-7.131-10.378Zm-2.128 2.474-.697-.997-5.543-7.93H8l4.474 6.4.697.996 5.815 8.318h-2.387l-4.745-6.787Z" />
                         </svg>
@@ -300,7 +300,7 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                       </a>
                     </li>
                     <li className="wp-social-link wp-social-link-linkedin wp-block-social-link">
-                      <a href="https://ug.linkedin.com/company/economic-policy-research-centre" className="wp-block-social-link-anchor">
+                      <a href="https://ug.linkedin.com/company/economic-policy-research-centre" className="wp-block-social-link-anchor" target="_blank" rel="noreferrer">
                         <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                           <path d="M19.7,3H4.3C3.582,3,3,3.582,3,4.3v15.4C3,20.418,3.582,21,4.3,21h15.4c0.718,0,1.3-0.582,1.3-1.3V4.3 C21,3.582,20.418,3,19.7,3z M8.339,18.338H5.667v-8.59h2.672V18.338z M7.004,8.574c-0.857,0-1.549-0.694-1.549-1.548 c0-0.855,0.691-1.548,1.549-1.548c0.854,0,1.547,0.694,1.547,1.548C8.551,7.881,7.858,8.574,7.004,8.574z M18.339,18.338h-2.669 v-4.177c0-0.996-0.017-2.278-1.387-2.278c-1.389,0-1.601,1.086-1.601,2.206v4.249h-2.667v-8.59h2.559v1.174h0.037 c0.356-0.675,1.227-1.387,2.526-1.387c2.703,0,3.203,1.779,3.203,4.092V18.338z" />
                         </svg>
@@ -308,7 +308,7 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                       </a>
                     </li>
                     <li className="wp-social-link wp-social-link-youtube wp-block-social-link">
-                      <a href="https://www.youtube.com/c/EprcugOrgUganda" className="wp-block-social-link-anchor">
+                      <a href="https://www.youtube.com/c/EprcugOrgUganda" className="wp-block-social-link-anchor" target="_blank" rel="noreferrer">
                         <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                           <path d="M21.8,8.001c0,0-0.195-1.378-0.795-1.985c-0.76-0.797-1.613-0.801-2.004-0.847c-2.799-0.202-6.997-0.202-6.997-0.202 h-0.009c0,0-4.198,0-6.997,0.202C4.608,5.216,3.756,5.22,2.995,6.016C2.395,6.623,2.2,8.001,2.2,8.001S2,9.62,2,11.238v1.517 c0,1.618,0.2,3.237,0.2,3.237s0.195,1.378,0.795,1.985c0.761,0.797,1.76,0.771,2.205,0.855c1.6,0.153,6.8,0.201,6.8,0.201 s4.203-0.006,7.001-0.209c0.391-0.047,1.243-0.051,2.004-0.847c0.6-0.607,0.795-1.985,0.795-1.985s0.2-1.618,0.2-3.237v-1.517 C22,9.62,21.8,8.001,21.8,8.001z M9.935,14.594l-0.001-5.62l5.404,2.82L9.935,14.594z" />
                         </svg>

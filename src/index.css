@@ -103,3 +103,75 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* ── EPRC Theme Overrides ─────────────────────────────────────────────── */
+
+/* 1. Footer: all text and links white */
+.site-footer,
+.site-footer p,
+.site-footer li,
+.site-footer address,
+.site-footer h3,
+.site-footer h6,
+.site-footer .widget-title,
+.site-footer .wp-block-heading {
+  color: #ffffff !important;
+}
+.site-footer a,
+.site-footer a:visited,
+.site-footer .wp-block-social-link-anchor {
+  color: #ffffff !important;
+  text-decoration: none;
+}
+.site-footer a:hover {
+  opacity: 0.8;
+}
+
+/* 2. Subscribe button: extra space above it */
+.email-wrap button[type="submit"] {
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+}
+.email-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 3. Nav dropdown chevron — replace blank <span class="mega-indicator"> with a real caret */
+.mega-menu-link .mega-indicator {
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: middle;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  position: relative;
+  top: 1px;
+}
+
+/* 4. Social links: horizontal row + white icons */
+.wp-block-social-links {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.wp-block-social-links li {
+  display: flex;
+}
+.wp-block-social-link-anchor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff !important;
+}
+.wp-block-social-link-anchor svg {
+  fill: #ffffff !important;
+}
+
