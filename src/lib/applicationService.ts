@@ -23,6 +23,13 @@ export interface EducationPayload {
   accolade: File | null;
 }
 
+export interface QuestionAnswerPayload {
+  question_id: string;
+  type: "text" | "radio" | "checkbox" | "dropdown";
+  answer?: string;    // for text, radio, dropdown
+  answers?: string[]; // for checkbox (array of OD-OPT-{n} ids)
+}
+
 export interface ApplicationPayload {
   fullName: string;
   email: string;
@@ -31,6 +38,7 @@ export interface ApplicationPayload {
   cv: File;
   experience: ExperiencePayload[];
   education: EducationPayload[];
+  questionAnswers: QuestionAnswerPayload[];
   /** UUID of the jobs row this application is for. */
   jobId: string;
 }
@@ -70,6 +78,11 @@ export async function submitApplication(
   }));
   form.append("experience", JSON.stringify(payload.experience));
   form.append("education",  JSON.stringify(educationMeta));
+
+  // ── Question answers ─────────────────────────────────────────────
+  if (payload.questionAnswers.length > 0) {
+    form.append("question_answers", JSON.stringify(payload.questionAnswers));
+  }
 
   // ── File fields ──────────────────────────────────────────────────
   form.append("cv", payload.cv);

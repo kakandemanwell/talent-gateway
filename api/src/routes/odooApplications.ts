@@ -38,6 +38,13 @@ interface EducationRow {
   accolade_file_path: string | null;
 }
 
+interface QuestionAnswerRow {
+  application_id: string;
+  question_id: string;
+  answer_text: string | null;
+  answer_option_ids: string[] | null;
+}
+
 interface JobRow {
   id: string;
   odoo_job_id: string;
@@ -192,7 +199,7 @@ const odooApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
       // ── Bulk-fetch experience + education for all returned applications ─────
       const appIds = apps.map((a) => a.id);
 
-      const [experiences, educations] = await Promise.all([
+      const [experiences, educations, questionAnswers] = await Promise.all([
         sql<ExperienceRow[]>`
           SELECT application_id, position, employer, description,
                  start_date, end_date, is_current, years
@@ -203,6 +210,11 @@ const odooApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
           SELECT application_id, qualification, level, field_of_study,
                  institution, year_completed, accolade_file_path
           FROM education
+          WHERE application_id = ANY(${appIds})
+        `,
+        sql<QuestionAnswerRow[]>`
+          SELECT application_id, question_id, answer_text, answer_option_ids
+          FROM application_question_answers
           WHERE application_id = ANY(${appIds})
         `,
       ]);
@@ -219,6 +231,12 @@ const odooApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
         const list = eduByApp.get(edu.application_id) ?? [];
         list.push(edu);
         eduByApp.set(edu.application_id, list);
+      }
+      const qaByApp = new Map<string, QuestionAnswerRow[]>();
+      for (const qa of questionAnswers) {
+        const list = qaByApp.get(qa.application_id) ?? [];
+        list.push(qa);
+        qaByApp.set(qa.application_id, list);
       }
 
       // ── Build response (presign file URLs) ───────────────────────────────
@@ -255,6 +273,22 @@ const odooApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
 
           const jobMeta = jobMap[app.job_id];
 
+          // Shape question answers per the spec: text → answer string,
+          // radio/dropdown → answer string (single OD-OPT-{n}),
+          // checkbox → answers array.
+          const appQuestionAnswers = (qaByApp.get(app.id) ?? []).map((qa) => {
+            const optIds = qa.answer_option_ids ?? [];
+            if (qa.answer_text !== null) {
+              return { question_id: qa.question_id, type: "text", answer: qa.answer_text };
+            }
+            if (optIds.length === 1) {
+              // radio or dropdown — return singular answer; Odoo distinguishes by question type
+              return { question_id: qa.question_id, answer: optIds[0] };
+            }
+            // checkbox — return array
+            return { question_id: qa.question_id, answers: optIds };
+          });
+
           return {
             application_ref: app.id,
             job_id: jobMeta?.odoo_job_id ?? null,
@@ -269,6 +303,7 @@ const odooApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
             cv_url_expires_at: cvSigned?.expiresAt ?? null,
             experience: appExperience,
             education: appEducation,
+            question_answers: appQuestionAnswers,
           };
         })
       );

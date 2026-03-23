@@ -31,8 +31,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Upload, FileText, Briefcase, GraduationCap, User, CheckCircle2, Loader2, ClipboardList } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { submitApplication } from "@/lib/applicationService";
 
 interface ExperienceRow {
@@ -64,6 +65,14 @@ interface FormErrors {
   summary?: string;
   experience?: Record<string, Record<string, string>>;
   education?: Record<string, Record<string, string>>;
+  questions?: Record<string, string>;
+}
+
+interface QuestionAnswerState {
+  question_id: string;
+  type: "text" | "radio" | "checkbox" | "dropdown";
+  answer: string;    // for text, radio, dropdown
+  answers: string[]; // for checkbox (array of OD-OPT-{n} ids)
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -133,7 +142,17 @@ const Index = () => {
     fetchJobById(jobId)
       .then((data) => {
         if (!data) navigate("/jobs", { replace: true });
-        else setJob(data);
+        else {
+          setJob(data);
+          setQuestionAnswers(
+            (data.questions ?? []).map((q) => ({
+              question_id: q.id,
+              type: q.type,
+              answer: "",
+              answers: [],
+            }))
+          );
+        }
       })
       .catch(() => navigate("/jobs", { replace: true }))
       .finally(() => setJobLoading(false));
@@ -146,6 +165,7 @@ const Index = () => {
   const [cv, setCv] = useState<File | null>(null);
   const [experience, setExperience] = useState<ExperienceRow[]>([createEmptyExperience()]);
   const [education, setEducation] = useState<EducationRow[]>([createEmptyEducation()]);
+  const [questionAnswers, setQuestionAnswers] = useState<QuestionAnswerState[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -218,6 +238,29 @@ const Index = () => {
     );
   };
 
+  const updateQuestionAnswer = (questionId: string, value: string) => {
+    setQuestionAnswers((prev) =>
+      prev.map((qa) =>
+        qa.question_id === questionId ? { ...qa, answer: value } : qa
+      )
+    );
+  };
+
+  const toggleCheckboxAnswer = (questionId: string, optionId: string) => {
+    setQuestionAnswers((prev) =>
+      prev.map((qa) => {
+        if (qa.question_id !== questionId) return qa;
+        const has = qa.answers.includes(optionId);
+        return {
+          ...qa,
+          answers: has
+            ? qa.answers.filter((a) => a !== optionId)
+            : [...qa.answers, optionId],
+        };
+      })
+    );
+  };
+
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -252,6 +295,19 @@ const Index = () => {
       if (Object.keys(rowErr).length) eduErrors[row.id] = rowErr;
     });
     if (Object.keys(eduErrors).length) newErrors.education = eduErrors;
+
+    const qErrors: Record<string, string> = {};
+    (job?.questions ?? []).forEach((q) => {
+      if (!q.required) return;
+      const qa = questionAnswers.find((a) => a.question_id === q.id);
+      if (!qa) { qErrors[q.id] = "Required"; return; }
+      if (q.type === "checkbox") {
+        if (qa.answers.length === 0) qErrors[q.id] = "This question requires at least one selection.";
+      } else {
+        if (!qa.answer.trim()) qErrors[q.id] = "Required";
+      }
+    });
+    if (Object.keys(qErrors).length) newErrors.questions = qErrors;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -294,6 +350,11 @@ const Index = () => {
           yearCompleted: edu.yearCompleted,
           accolade: edu.accolade,
         })),
+        questionAnswers: questionAnswers.map((qa) =>
+          qa.type === "checkbox"
+            ? { question_id: qa.question_id, type: qa.type, answers: qa.answers }
+            : { question_id: qa.question_id, type: qa.type, answer: qa.answer }
+        ),
       });
 
       setShowSuccess(true);
@@ -653,6 +714,108 @@ const Index = () => {
               ))}
             </CardContent>
           </Card>
+
+          {/* Screening Questions */}
+          {job?.questions && job.questions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                  Screening Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {job.questions.map((q, idx) => {
+                  const qa = questionAnswers.find((a) => a.question_id === q.id);
+                  const hasError = !!errors.questions?.[q.id];
+                  return (
+                    <div key={q.id} className="space-y-2">
+                      <Label className="text-sm font-medium leading-snug">
+                        {idx + 1}. {q.text}
+                        {q.required && <span className="ml-1 text-destructive">*</span>}
+                      </Label>
+
+                      {q.type === "text" && (
+                        <div className="space-y-1">
+                          <Textarea
+                            placeholder="Your answer…"
+                            value={qa?.answer ?? ""}
+                            onChange={(e) => updateQuestionAnswer(q.id, e.target.value)}
+                            maxLength={q.char_limit ?? undefined}
+                            className={`min-h-[100px] ${hasError ? "border-destructive" : ""}`}
+                          />
+                          {q.char_limit && (
+                            <p className="text-xs text-muted-foreground text-right">
+                              {qa?.answer.length ?? 0} / {q.char_limit} characters
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {q.type === "radio" && (
+                        <RadioGroup
+                          value={qa?.answer ?? ""}
+                          onValueChange={(val) => updateQuestionAnswer(q.id, val)}
+                          className={`space-y-2 rounded-md ${hasError ? "border border-destructive p-3" : ""}`}
+                        >
+                          {q.options.map((opt) => (
+                            <div key={opt.id} className="flex items-center gap-2">
+                              <RadioGroupItem value={opt.id} id={`${q.id}-${opt.id}`} />
+                              <Label
+                                htmlFor={`${q.id}-${opt.id}`}
+                                className="font-normal cursor-pointer"
+                              >
+                                {opt.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      )}
+
+                      {q.type === "checkbox" && (
+                        <div className={`space-y-2 rounded-md ${hasError ? "border border-destructive p-3" : ""}`}>
+                          {q.options.map((opt) => (
+                            <label
+                              key={opt.id}
+                              className="flex items-center gap-2 cursor-pointer select-none"
+                            >
+                              <Checkbox
+                                checked={qa?.answers.includes(opt.id) ?? false}
+                                onCheckedChange={() => toggleCheckboxAnswer(q.id, opt.id)}
+                              />
+                              <span className="text-sm">{opt.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {q.type === "dropdown" && (
+                        <Select
+                          value={qa?.answer ?? ""}
+                          onValueChange={(val) => updateQuestionAnswer(q.id, val)}
+                        >
+                          <SelectTrigger className={hasError ? "border-destructive" : ""}>
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {q.options.map((opt) => (
+                              <SelectItem key={opt.id} value={opt.id}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {hasError && (
+                        <p className="text-sm text-destructive">{errors.questions![q.id]}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
 
           {/* CV Upload */}
           <Card>

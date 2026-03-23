@@ -1,5 +1,28 @@
 import { API_BASE } from "@/lib/api";
 
+export interface JobSkill {
+  name: string;
+  type: string | null;
+}
+
+export interface JobQuestionOption {
+  id: string;       // OD-OPT-{n}
+  sequence: number;
+  label: string;
+}
+
+export type QuestionType = "text" | "radio" | "checkbox" | "dropdown";
+
+export interface JobQuestion {
+  id: string;          // OD-Q-{n}
+  sequence: number;
+  text: string;
+  type: QuestionType;
+  required: boolean;
+  char_limit: number | null;
+  options: JobQuestionOption[];
+}
+
 export interface Job {
   id: string;           // PostgreSQL UUID
   odoo_job_id: string;  // "OD-{hr.job.id}"
@@ -8,9 +31,11 @@ export interface Job {
   location: string | null;
   closing_date: string | null; // ISO date string "YYYY-MM-DD"
   description: string | null;  // raw HTML from Odoo
+  skills: JobSkill[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  questions: JobQuestion[];
 }
 
 /**

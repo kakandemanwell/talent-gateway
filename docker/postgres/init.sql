@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   location       TEXT,
   closing_date   DATE,
   description    TEXT,                   -- raw HTML from Odoo
+  skills         JSONB NOT NULL DEFAULT '[]'::jsonb,  -- [{ name, type }] pushed from Odoo
   is_active      BOOLEAN NOT NULL DEFAULT true,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -83,6 +84,38 @@ CREATE INDEX IF NOT EXISTS idx_education_application  ON education(application_i
 CREATE INDEX IF NOT EXISTS idx_applications_email     ON applications(email);
 CREATE INDEX IF NOT EXISTS idx_applications_job       ON applications(job_id);
 CREATE INDEX IF NOT EXISTS idx_applications_gsync     ON applications(gateway_sync_status);
+
+-- ── Screening questions (pushed from Odoo as part of job payload) ─────────────
+
+CREATE TABLE IF NOT EXISTS job_questions (
+  id          TEXT        PRIMARY KEY,            -- OD-Q-{n} from Odoo
+  job_id      UUID        NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  sequence    INTEGER     NOT NULL DEFAULT 0,
+  text        TEXT        NOT NULL,
+  type        TEXT        NOT NULL,               -- text | radio | checkbox | dropdown
+  required    BOOLEAN     NOT NULL DEFAULT false,
+  char_limit  INTEGER                             -- for text type only; null = unlimited
+);
+
+CREATE TABLE IF NOT EXISTS job_question_options (
+  id           TEXT        PRIMARY KEY,           -- OD-OPT-{n} from Odoo
+  question_id  TEXT        NOT NULL REFERENCES job_questions(id) ON DELETE CASCADE,
+  sequence     INTEGER     NOT NULL DEFAULT 0,
+  label        TEXT        NOT NULL
+);
+
+-- question_id has NO FK — preserves historical answers when questions are replaced
+CREATE TABLE IF NOT EXISTS application_question_answers (
+  id                UUID    PRIMARY KEY DEFAULT uuid_generate_v4(),
+  application_id    UUID    NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+  question_id       TEXT    NOT NULL,
+  answer_text       TEXT,                         -- for type = text
+  answer_option_ids TEXT[]                        -- for type = radio / checkbox / dropdown
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_questions_job   ON job_questions(job_id);
+CREATE INDEX IF NOT EXISTS idx_jqopts_question     ON job_question_options(question_id);
+CREATE INDEX IF NOT EXISTS idx_aqa_application     ON application_question_answers(application_id);
 
 -- ── updated_at trigger ────────────────────────────────────────────────────────
 

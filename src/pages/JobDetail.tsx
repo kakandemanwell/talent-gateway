@@ -128,6 +128,27 @@ const JobDetail = () => {
               <p className="text-muted-foreground">No description provided.</p>
             )}
 
+            {job.skills && job.skills.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-3">Required Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {job.skills.map((skill, idx) => (
+                      <Badge
+                        key={idx}
+                        variant="secondary"
+                        className="px-3 py-1 text-sm"
+                        title={skill.type ?? undefined}
+                      >
+                        {skill.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             <Separator />
 
             <div className="flex justify-center pt-2">

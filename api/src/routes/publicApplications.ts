@@ -53,6 +53,13 @@ interface EducationPayload {
   yearCompleted: string;
 }
 
+interface QuestionAnswerPayload {
+  question_id: string;
+  type: "text" | "radio" | "checkbox" | "dropdown";
+  answer?: string;    // for text, radio, dropdown
+  answers?: string[]; // for checkbox
+}
+
 // ── Route ─────────────────────────────────────────────────────────────────────
 
 const publicApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -106,13 +113,15 @@ const publicApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
 
     let experience: ExperiencePayload[] = [];
     let education: EducationPayload[] = [];
+    let questionAnswers: QuestionAnswerPayload[] = [];
     try {
       if (fields["experience"]) experience = JSON.parse(fields["experience"]);
       if (fields["education"]) education = JSON.parse(fields["education"]);
+      if (fields["question_answers"]) questionAnswers = JSON.parse(fields["question_answers"]);
     } catch {
       return reply
         .status(422)
-        .send({ error: "experience and education must be valid JSON arrays" });
+        .send({ error: "experience, education and question_answers must be valid JSON arrays" });
     }
 
     // ── Step 1: Insert application row ─────────────────────────────────────
@@ -194,6 +203,19 @@ const publicApplicationsRoutes: FastifyPluginAsync = async (fastify) => {
           })
         );
         await sql`INSERT INTO education ${sql(educationRows)}`;
+      }
+
+      // ── Step 6: Insert question answers ─────────────────────────────────
+      if (questionAnswers.length > 0) {
+        const answerRows = questionAnswers.map((qa) => ({
+          application_id:    applicationId,
+          question_id:       qa.question_id,
+          answer_text:       qa.type === "text" ? (qa.answer ?? null) : null,
+          answer_option_ids: qa.type === "checkbox"
+            ? (qa.answers ?? null)
+            : qa.answer ? [qa.answer] : null,
+        }));
+        await sql`INSERT INTO application_question_answers ${sql(answerRows)}`;
       }
 
       reply.status(201).send({ applicationId });
