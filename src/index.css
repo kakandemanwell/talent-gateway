@@ -106,28 +106,460 @@ All colors MUST be HSL.
 
 /* ── EPRC Theme Overrides ─────────────────────────────────────────────── */
 
-/* 1. Footer: all text and links white */
+/* 1. Footer: all rendered text and icons white */
 .site-footer,
-.site-footer p,
-.site-footer li,
-.site-footer address,
-.site-footer h3,
-.site-footer h6,
-.site-footer .widget-title,
-.site-footer .wp-block-heading {
+.site-footer :is(
+  p,
+  li,
+  address,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  span,
+  div,
+  a,
+  a:visited,
+  button,
+  strong,
+  em,
+  small,
+  label,
+  .widget-title,
+  .wp-block-heading,
+  .wp-block-social-link-anchor,
+  .scroll-top-holder,
+  .holder
+) {
   color: #ffffff !important;
 }
 .site-footer a,
 .site-footer a:visited,
 .site-footer .wp-block-social-link-anchor {
-  color: #ffffff !important;
   text-decoration: none;
+}
+.site-footer svg,
+.site-footer svg path {
+  fill: currentColor;
 }
 .site-footer a:hover {
   opacity: 0.8;
 }
 
-/* 2. Subscribe button: extra space above it */
+/* 2. Header and navigation */
+.site {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.page-container {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.subheader.fixed {
+  background: #0e7490;
+  color: #ffffff;
+  font-size: 0.875rem;
+}
+
+.subheader .top-part,
+.header-wrap-inner,
+.menu-optional,
+.mega-menu,
+.mega-menu-trigger-row {
+  display: flex;
+  align-items: center;
+}
+
+.subheader .top-part {
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 40px;
+}
+
+.subheader .-left,
+.subheader .-right,
+.menu-optional,
+.mega-menu,
+.mega-sub-menu,
+.wp-block-social-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.subheader .-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.header-wrap-inner {
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 84px;
+}
+
+.left-part,
+.right-part,
+.branding,
+.nav-container,
+.mega-menu-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.header,
+.header-wrap,
+.header-wrap-inner,
+.right-part,
+.nav,
+.slide-in-overlay,
+.slide-in-overlay .holder,
+.nav-container,
+.mega-menu-wrap,
+.mega-menu,
+.mega-menu-item {
+  overflow: visible;
+}
+
+.right-part {
+  gap: 20px;
+}
+
+.branding img {
+  width: 150px;
+  max-width: 100%;
+  height: auto;
+}
+
+.mobile-hamburger,
+.close-bar,
+.overlay {
+  display: none;
+}
+
+.mega-menu {
+  position: relative;
+  gap: 4px;
+}
+
+.mega-menu-item {
+  position: relative;
+}
+
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children {
+  position: static !important;
+}
+
+.mega-menu-link,
+.mega-submenu-toggle,
+.menu-optional .icon-button,
+.hamburger-button {
+  border: 0;
+  background: transparent;
+}
+
+.mega-menu-link,
+.mega-submenu-toggle {
+  color: #0f172a;
+}
+
+.mega-menu-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.mega-menu-link:hover,
+.mega-menu-link:focus-visible,
+.mega-menu-item.expanded > .mega-menu-trigger-row > .mega-menu-link {
+  color: #0e7490;
+}
+
+.mega-menu-trigger-row {
+  gap: 4px;
+}
+
+.mega-menu-trigger-row > .mega-menu-link {
+  flex: 1 1 auto;
+  min-width: max-content;
+  color: #0f172a !important;
+  -webkit-text-fill-color: currentColor;
+  opacity: 1 !important;
+  visibility: visible !important;
+  white-space: nowrap;
+}
+
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children > .mega-menu-trigger-row > .mega-menu-link {
+  display: inline-flex !important;
+  align-items: center;
+  color: #0f172a !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.03em;
+}
+
+.mega-menu-trigger-row > .mega-menu-link:hover,
+.mega-menu-trigger-row > .mega-menu-link:focus-visible,
+.mega-menu-item.expanded > .mega-menu-trigger-row > .mega-menu-link {
+  color: #0e7490 !important;
+  -webkit-text-fill-color: currentColor;
+}
+
+.mega-menu-item-has-children > .mega-menu-trigger-row > .mega-menu-link {
+  padding-right: 6px;
+}
+
+.mega-submenu-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.mega-submenu-toggle:hover,
+.mega-submenu-toggle:focus-visible {
+  background: rgba(14, 116, 144, 0.1);
+  color: #0e7490;
+}
+
+.mega-menu-item.expanded > .mega-menu-trigger-row .mega-submenu-toggle {
+  color: #0e7490;
+}
+
+.mega-sub-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: none;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid rgba(14, 116, 144, 0.12);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+  z-index: 40;
+}
+
+.mega-sub-menu > li {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.mega-menu-trigger-row:hover + .mega-sub-menu,
+.mega-menu-trigger-row:focus-within + .mega-sub-menu,
+.mega-menu-item:hover > .mega-sub-menu,
+.mega-menu-item:focus-within > .mega-sub-menu,
+.mega-menu-item.expanded > .mega-sub-menu {
+  display: grid;
+}
+
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children > .mega-sub-menu {
+  display: none !important;
+}
+
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children:hover > .mega-sub-menu,
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children:focus-within > .mega-sub-menu,
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children > .mega-menu-trigger-row:hover + .mega-sub-menu,
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children > .mega-menu-trigger-row:focus-within + .mega-sub-menu,
+#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children.expanded > .mega-sub-menu {
+  display: flex !important;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.mega-sub-menu .mega-menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #0f172a !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-weight: 600;
+  opacity: 1 !important;
+  text-align: center;
+  white-space: normal;
+}
+
+.mega-sub-menu .mega-menu-link:hover,
+.mega-sub-menu .mega-menu-link:focus-visible {
+  color: #0e7490 !important;
+  -webkit-text-fill-color: currentColor !important;
+  background: rgba(14, 116, 144, 0.08);
+}
+
+.menu-optional .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #0f172a;
+  border-radius: 999px;
+}
+
+.menu-optional .icon-button svg,
+.scroll-top .icon-button svg {
+  fill: currentColor;
+}
+
+@media (max-width: 991px) {
+  .subheader.fixed {
+    display: none;
+  }
+
+  .mobile-hamburger,
+  .close-bar,
+  .overlay {
+    display: block;
+  }
+
+  .header-wrap-inner {
+    min-height: 72px;
+  }
+
+  .menu-slide-in-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 50;
+  }
+
+  .menu-slide-in-overlay.opened {
+    display: block;
+  }
+
+  .menu-slide-in-overlay .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+  }
+
+  .menu-slide-in-overlay .holder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: min(360px, 88vw);
+    height: 100%;
+    overflow-y: auto;
+    padding: 88px 20px 24px;
+    background: #ffffff;
+    box-shadow: 20px 0 40px rgba(15, 23, 42, 0.18);
+  }
+
+  .close-bar {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+  }
+
+  .mega-menu,
+  .mega-menu-trigger-row,
+  .nav-container,
+  .mega-menu-wrap,
+  .right-part {
+    display: block;
+  }
+
+  .mega-menu-item {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  }
+
+  .mega-menu-trigger-row {
+    position: relative;
+    padding-right: 44px;
+  }
+
+  .mega-menu-link {
+    width: 100%;
+    padding: 14px 0;
+  }
+
+  .mega-submenu-toggle {
+    position: absolute;
+    top: 8px;
+    right: 0;
+  }
+
+  .mega-sub-menu {
+    position: static;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    padding: 0 0 12px 16px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mega-sub-menu > li {
+    flex: initial;
+  }
+
+  .mega-menu-item:hover > .mega-sub-menu,
+  .mega-menu-item:focus-within > .mega-sub-menu {
+    display: none;
+  }
+
+  .mega-menu-item.expanded > .mega-sub-menu {
+    display: grid;
+  }
+
+  .mega-sub-menu .mega-menu-link {
+    padding: 10px 0;
+  }
+
+  .menu-optional {
+    display: none;
+  }
+}
+
+@media (min-width: 992px) {
+  .menu-slide-in-overlay {
+    display: block;
+  }
+
+  .menu-slide-in-overlay .holder,
+  .menu-slide-in-overlay .nav-container,
+  .menu-slide-in-overlay .mega-menu-wrap {
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* 3. Subscribe button: extra space above it */
 .email-wrap button[type="submit"] {
   margin-top: 10px;
   display: block;
@@ -138,10 +570,10 @@ All colors MUST be HSL.
   flex-direction: column;
 }
 
-/* 3. Nav dropdown chevron — replace blank <span class="mega-indicator"> with a real caret */
-.mega-menu-link .mega-indicator {
+/* 4. Nav dropdown chevron — render the indicator inside links or toggle buttons */
+.mega-indicator {
   display: inline-block;
-  margin-left: 4px;
+  margin-left: 0;
   vertical-align: middle;
   width: 0;
   height: 0;
@@ -150,6 +582,13 @@ All colors MUST be HSL.
   border-top: 5px solid currentColor;
   position: relative;
   top: 1px;
+  transition: transform 160ms ease;
+}
+
+.mega-menu-item.expanded > .mega-menu-trigger-row .mega-indicator,
+.mega-menu-item:hover > .mega-menu-trigger-row .mega-indicator,
+.mega-menu-item:focus-within > .mega-menu-trigger-row .mega-indicator {
+  transform: rotate(180deg);
 }
 
 /* 4. Social links: horizontal row + white icons */

@@ -7,6 +7,16 @@ interface EprcLayoutProps {
 
 export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
+
+  const toggleMenuSection = (section: string) => {
+    setExpandedMenu((current) => (current === section ? null : section));
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+    setExpandedMenu(null);
+  };
 
   return (
     <div id="page" className="site">
@@ -40,7 +50,15 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                 <button
                   className="hamburger-button"
                   aria-label="Hamburger"
-                  onClick={() => setMobileMenuOpen((o) => !o)}
+                  onClick={() => {
+                    setMobileMenuOpen((open) => {
+                      if (open) {
+                        setExpandedMenu(null);
+                      }
+
+                      return !open;
+                    });
+                  }}
                 >
                   <div className="hamburger icon-button" tabIndex={0}>
                     <i className="icon"></i>
@@ -65,12 +83,12 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                 className={`nav with-multi-level-indicators with-highlighted-menu hide-mobile-menu-images hide-mobile-menu-descriptions${mobileMenuOpen ? " opened" : ""}`}
               >
                 <div className={`slide-in-overlay menu-slide-in-overlay${mobileMenuOpen ? " opened" : ""}`}>
-                  <div className="overlay" onClick={() => setMobileMenuOpen(false)}></div>
+                  <div className="overlay" onClick={closeMobileMenu}></div>
                   <div className="close-bar">
                     <button
                       className="icon-button -overlay-button"
                       aria-label="Close"
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={closeMobileMenu}
                     >
                       <i className="icon">
                         <svg className="default" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -96,19 +114,30 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                             <a className="mega-menu-link" href="https://eprcug.org/research/" target="_blank" rel="noreferrer">Research</a>
                           </li>
 
-                          <li className="mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/projects/" target="_blank" rel="noreferrer">
-                              Projects<span className="mega-indicator" aria-hidden="true"></span>
-                            </a>
+                          <li className={`mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "projects" ? " expanded" : ""}`}>
+                            <div className="mega-menu-trigger-row">
+                              <a className="mega-menu-link" href="https://eprcug.org/projects/" target="_blank" rel="noreferrer">
+                                PROJECTS
+                              </a>
+                              <button
+                                type="button"
+                                className="mega-submenu-toggle"
+                                aria-expanded={expandedMenu === "projects"}
+                                aria-label="Toggle Projects submenu"
+                                onClick={() => toggleMenuSection("projects")}
+                              >
+                                <span className="mega-indicator" aria-hidden="true"></span>
+                              </button>
+                            </div>
                             <ul className="mega-sub-menu">
                               <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/new-projects/" target="_blank" rel="noreferrer">New Projects</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/projects/new-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>New Projects</a>
                               </li>
                               <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/ongoing-projects/" target="_blank" rel="noreferrer">Ongoing Projects</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/projects/ongoing-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Ongoing Projects</a>
                               </li>
                               <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/completed-projects/" target="_blank" rel="noreferrer">Completed Projects</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/projects/completed-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Completed Projects</a>
                               </li>
                             </ul>
                           </li>
@@ -117,57 +146,79 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                             <a className="mega-menu-link" href="https://eprcug.org/blogs/" target="_blank" rel="noreferrer">Blogs</a>
                           </li>
 
-                          <li className="mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/media-centre/" target="_blank" rel="noreferrer">
-                              Media Centre<span className="mega-indicator" aria-hidden="true"></span>
-                            </a>
+                          <li className={`mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "media-centre" ? " expanded" : ""}`}>
+                            <div className="mega-menu-trigger-row">
+                              <a className="mega-menu-link" href="https://eprcug.org/media-centre/" target="_blank" rel="noreferrer">
+                                MEDIA CENTRE
+                              </a>
+                              <button
+                                type="button"
+                                className="mega-submenu-toggle"
+                                aria-expanded={expandedMenu === "media-centre"}
+                                aria-label="Toggle Media Centre submenu"
+                                onClick={() => toggleMenuSection("media-centre")}
+                              >
+                                <span className="mega-indicator" aria-hidden="true"></span>
+                              </button>
+                            </div>
                             <ul className="mega-sub-menu">
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-highlights/" target="_blank" rel="noreferrer">EPRC Highlights</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-highlights/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC Highlights</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-in-the-news/" target="_blank" rel="noreferrer">EPRC In The News</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-in-the-news/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC In The News</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/press-releases/" target="_blank" rel="noreferrer">Press Releases</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/press-releases/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Press Releases</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/gallery/" target="_blank" rel="noreferrer">Gallery</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/gallery/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Gallery</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://www.youtube.com/@EprcugOrgUganda/videos" target="_blank" rel="noreferrer">Videos</a>
+                                <a className="mega-menu-link" href="https://www.youtube.com/@EprcugOrgUganda/videos" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Videos</a>
                               </li>
                             </ul>
                           </li>
 
-                          <li className="mega-menu-item mega-current-menu-ancestor mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/about/" target="_blank" rel="noreferrer">
-                              About<span className="mega-indicator" aria-hidden="true"></span>
-                            </a>
+                          <li className={`mega-menu-item mega-current-menu-ancestor mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "about" ? " expanded" : ""}`}>
+                            <div className="mega-menu-trigger-row">
+                              <a className="mega-menu-link" href="https://eprcug.org/about/" target="_blank" rel="noreferrer">
+                                ABOUT
+                              </a>
+                              <button
+                                type="button"
+                                className="mega-submenu-toggle"
+                                aria-expanded={expandedMenu === "about"}
+                                aria-label="Toggle About submenu"
+                                onClick={() => toggleMenuSection("about")}
+                              >
+                                <span className="mega-indicator" aria-hidden="true"></span>
+                              </button>
+                            </div>
                             <ul className="mega-sub-menu">
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/board-of-directors/" target="_blank" rel="noreferrer">Board of Directors</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/board-of-directors/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Board of Directors</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-management/" target="_blank" rel="noreferrer">EPRC Management</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-management/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC Management</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/staff/" target="_blank" rel="noreferrer">Staff</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/staff/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Staff</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-partners/" target="_blank" rel="noreferrer">EPRC Partners</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/eprc-partners/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC Partners</a>
                               </li>
                               <li className="mega-current-menu-item" style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/careers/" target="_blank" rel="noreferrer" aria-current="page">Careers</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/careers/" target="_blank" rel="noreferrer" aria-current="page" onClick={closeMobileMenu}>Careers</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/opportunities/" target="_blank" rel="noreferrer">Opportunities</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/opportunities/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Opportunities</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/procurements/" target="_blank" rel="noreferrer">Procurements</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/procurements/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Procurements</a>
                               </li>
                               <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/faqs/" target="_blank" rel="noreferrer">FAQs</a>
+                                <a className="mega-menu-link" href="https://eprcug.org/faqs/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>FAQs</a>
                               </li>
                             </ul>
                           </li>
