@@ -218,6 +218,7 @@ All colors MUST be HSL.
   justify-content: space-between;
   gap: 24px;
   min-height: 84px;
+  position: relative;
 }
 
 .left-part,
@@ -259,17 +260,65 @@ All colors MUST be HSL.
   display: none;
 }
 
-.mega-menu {
+.hamburger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hamburger.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  color: #0f172a;
+}
+
+.hamburger.icon-button .icon,
+.hamburger.icon-button .icon::before,
+.hamburger.icon-button .icon::after {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: transform 160ms ease, opacity 160ms ease, background-color 160ms ease;
+  content: "";
+}
+
+.hamburger.icon-button .icon {
   position: relative;
+}
+
+.hamburger.icon-button .icon::before {
+  position: absolute;
+  top: -6px;
+  left: 0;
+}
+
+.hamburger.icon-button .icon::after {
+  position: absolute;
+  top: 6px;
+  left: 0;
+}
+
+.nav.opened + .menu-optional,
+.nav.opened .hamburger.icon-button,
+.hamburger-button:hover .hamburger.icon-button,
+.hamburger-button:focus-visible .hamburger.icon-button {
+  color: #0e7490;
+}
+
+.mega-menu {
   gap: 4px;
 }
 
 .mega-menu-item {
-  position: relative;
-}
-
-#mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children {
-  position: static !important;
+  position: static;
 }
 
 .mega-menu-link,
@@ -358,27 +407,27 @@ All colors MUST be HSL.
 
 .mega-sub-menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: 100%;
   left: 0;
   right: 0;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   display: none;
-  align-items: stretch;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: 1px solid rgba(14, 116, 144, 0.12);
-  border-radius: 16px;
+  grid-template-columns: repeat(var(--columns, 3), 1fr);
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 2px solid rgba(14, 116, 144, 0.15);
+  border-radius: 0 0 12px 12px;
   background: #ffffff;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
-  z-index: 40;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.14);
+  z-index: 50;
 }
 
 .mega-sub-menu > li {
   flex: 1 1 0;
   min-width: 0;
+  grid-column: span var(--span, 1);
 }
 
 .mega-menu-trigger-row:hover + .mega-sub-menu,
@@ -398,7 +447,8 @@ All colors MUST be HSL.
 #mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children > .mega-menu-trigger-row:hover + .mega-sub-menu,
 #mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children > .mega-menu-trigger-row:focus-within + .mega-sub-menu,
 #mega-menu-wrap-primary #mega-menu-primary > li.mega-menu-item.mega-menu-item-has-children.expanded > .mega-sub-menu {
-  display: flex !important;
+  display: grid !important;
+  grid-template-columns: repeat(var(--columns, 3), 1fr);
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -447,31 +497,111 @@ All colors MUST be HSL.
     display: none;
   }
 
-  .mobile-hamburger,
+  #masthead .header-wrap-inner {
+    position: relative;
+  }
+
+  .header-wrap,
+  .header-wrap-inner {
+    overflow: visible;
+  }
+
+  #masthead .mobile-hamburger,
+  #masthead .mobile-hamburger.-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 25;
+  }
+
   .close-bar,
   .overlay {
     display: block;
+  }
+
+  .left-part {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    padding-left: 56px;
+    gap: 12px;
+  }
+
+  .branding {
+    min-width: 0;
+  }
+
+  .right-part {
+    position: static;
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 0 0 auto;
+    gap: 0;
   }
 
   .header-wrap-inner {
     min-height: 72px;
   }
 
+  #masthead .mobile-hamburger .hamburger-button {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #masthead .mobile-hamburger .hamburger.icon-button {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    color: #0f172a !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #masthead .mobile-hamburger .hamburger.icon-button .icon,
+  #masthead .mobile-hamburger .hamburger.icon-button .icon::before,
+  #masthead .mobile-hamburger .hamburger.icon-button .icon::after {
+    background: currentColor !important;
+  }
+
   .menu-slide-in-overlay {
     position: fixed;
     inset: 0;
-    display: none;
-    z-index: 50;
-  }
-
-  .menu-slide-in-overlay.opened {
     display: block;
+    pointer-events: none;
+    z-index: 1100;
   }
 
   .menu-slide-in-overlay .overlay {
     position: absolute;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(15, 23, 42, 0.42);
+    opacity: 0;
+    transition: opacity 220ms ease;
   }
 
   .menu-slide-in-overlay .holder {
@@ -480,24 +610,59 @@ All colors MUST be HSL.
     left: 0;
     width: min(360px, 88vw);
     height: 100%;
+    max-height: 100vh;
     overflow-y: auto;
-    padding: 88px 20px 24px;
+    padding: 84px 20px 24px;
     background: #ffffff;
     box-shadow: 20px 0 40px rgba(15, 23, 42, 0.18);
+    transform: translateX(-100%);
+    transition: transform 260ms ease;
+  }
+
+  .menu-slide-in-overlay.opened {
+    pointer-events: auto;
+  }
+
+  .menu-slide-in-overlay.opened .overlay {
+    opacity: 1;
+  }
+
+  .menu-slide-in-overlay.opened .holder {
+    transform: translateX(0);
+  }
+
+  .menu-slide-in-overlay .nav-container,
+  .menu-slide-in-overlay .mega-menu-wrap {
+    display: block;
+    width: 100%;
   }
 
   .close-bar {
     position: absolute;
     top: 20px;
     left: 20px;
-    z-index: 1;
+    z-index: 2;
+    display: block;
+  }
+
+  .close-bar .icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.14);
+    color: #0f172a;
+  }
+
+  .nav {
+    position: static;
+    width: auto;
   }
 
   .mega-menu,
-  .mega-menu-trigger-row,
-  .nav-container,
-  .mega-menu-wrap,
-  .right-part {
+  .mega-menu-trigger-row {
     display: block;
   }
 
@@ -507,12 +672,14 @@ All colors MUST be HSL.
 
   .mega-menu-trigger-row {
     position: relative;
-    padding-right: 44px;
+    display: block;
+    padding-right: 52px;
   }
 
   .mega-menu-link {
     width: 100%;
-    padding: 14px 0;
+    padding: 16px 0;
+    justify-content: flex-start;
   }
 
   .mega-submenu-toggle {
@@ -526,6 +693,7 @@ All colors MUST be HSL.
     min-width: 0;
     width: auto;
     max-width: none;
+    display: none !important;
     padding: 0 0 12px 16px;
     border: 0;
     border-radius: 0;
@@ -543,16 +711,134 @@ All colors MUST be HSL.
   }
 
   .mega-menu-item.expanded > .mega-sub-menu {
-    display: grid;
+    display: grid !important;
+    gap: 0;
   }
 
   .mega-sub-menu .mega-menu-link {
     padding: 10px 0;
+    justify-content: flex-start;
+    text-align: left;
   }
 
   .menu-optional {
     display: none;
   }
+
+  #site-navigation {
+    display: none;
+  }
+}
+
+/* Mobile nav portal panel — rendered at document.body via React portal */
+.mobile-nav-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+.mobile-nav-panel.is-open {
+  display: block;
+}
+.mobile-nav-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+}
+.mobile-nav-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: min(320px, 88vw);
+  height: 100%;
+  background: #ffffff;
+  overflow-y: auto;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.18);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mobile-nav-panel.is-open .mobile-nav-drawer {
+  transform: translateX(0);
+}
+.mobile-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+.mobile-nav-logo {
+  width: 100px;
+}
+.mobile-nav-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #0f172a;
+  border-radius: 999px;
+}
+.mobile-nav-close:hover {
+  background: rgba(148, 163, 184, 0.18);
+}
+.mobile-mega-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+.mobile-mega-menu .mega-menu-item {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+.mobile-mega-menu .mega-menu-trigger-row {
+  position: relative;
+  padding-right: 44px;
+  display: flex;
+  align-items: center;
+}
+.mobile-mega-menu .mega-menu-link {
+  width: 100%;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: flex-start;
+  color: #0f172a !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-weight: 600;
+  text-decoration: none;
+}
+.mobile-mega-menu .mega-menu-link:hover {
+  color: #0e7490 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+.mobile-mega-menu .mega-submenu-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.mobile-mega-menu .mega-sub-menu {
+  position: static !important;
+  display: none !important;
+  padding: 0 0 12px 20px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  min-width: 0;
+  width: auto;
+}
+.mobile-mega-menu .mega-menu-item.expanded > .mega-sub-menu {
+  display: block !important;
+}
+.mobile-mega-menu .mega-sub-menu .mega-menu-link {
+  padding: 10px 20px;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 @media (min-width: 992px) {

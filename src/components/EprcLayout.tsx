@@ -1,4 +1,5 @@
-import { useState } from "react";
+﻿import { useState } from "react";
+import { createPortal } from "react-dom";
 
 interface EprcLayoutProps {
   children: React.ReactNode;
@@ -18,8 +19,104 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
     setExpandedMenu(null);
   };
 
+  const renderMainNavItems = () => (
+    <>
+      <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
+        <a className="mega-menu-link" href="https://eprcug.org/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>HOME</a>
+      </li>
+
+      <li className="mega-menu-item mega-align-bottom-left mega-menu-megamenu">
+        <a className="mega-menu-link" href="https://eprcug.org/publication/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>PUBLICATIONS</a>
+      </li>
+
+      <li className="mega-menu-item mega-align-bottom-left mega-menu-megamenu">
+        <a className="mega-menu-link" href="https://eprcug.org/research/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>RESEARCH</a>
+      </li>
+
+      <li className={`mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "projects" ? " expanded" : ""}`}>
+        <div className="mega-menu-trigger-row">
+          <a className="mega-menu-link" href="https://eprcug.org/projects/" target="_blank" rel="noreferrer">PROJECTS</a>
+          <button type="button" className="mega-submenu-toggle" aria-expanded={expandedMenu === "projects"} aria-label="Toggle Projects submenu" onClick={() => toggleMenuSection("projects")}>
+            <span className="mega-indicator" aria-hidden="true"></span>
+          </button>
+        </div>
+        <ul className="mega-sub-menu" style={{ "--columns": "3" } as React.CSSProperties}>
+          <li><a className="mega-menu-link" href="https://eprcug.org/projects/new-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>NEW PROJECTS</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/projects/ongoing-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>ONGOING PROJECTS</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/projects/completed-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>COMPLETED PROJECTS</a></li>
+        </ul>
+      </li>
+
+      <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
+        <a className="mega-menu-link" href="https://eprcug.org/blogs/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>BLOGS</a>
+      </li>
+
+      <li className={`mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "media-centre" ? " expanded" : ""}`}>
+        <div className="mega-menu-trigger-row">
+          <a className="mega-menu-link" href="https://eprcug.org/media-centre/" target="_blank" rel="noreferrer">MEDIA CENTRE</a>
+          <button type="button" className="mega-submenu-toggle" aria-expanded={expandedMenu === "media-centre"} aria-label="Toggle Media Centre submenu" onClick={() => toggleMenuSection("media-centre")}>
+            <span className="mega-indicator" aria-hidden="true"></span>
+          </button>
+        </div>
+        <ul className="mega-sub-menu" style={{ "--columns": "5" } as React.CSSProperties}>
+          <li><a className="mega-menu-link" href="https://eprcug.org/eprc-highlights/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC HIGHLIGHTS</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/eprc-in-the-news/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC IN THE NEWS</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/press-releases/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>PRESS RELEASES</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/gallery/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>GALLERY</a></li>
+          <li><a className="mega-menu-link" href="https://www.youtube.com/@EprcugOrgUganda/videos" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>VIDEOS</a></li>
+        </ul>
+      </li>
+
+      <li className={`mega-menu-item mega-current-menu-ancestor mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "about" ? " expanded" : ""}`}>
+        <div className="mega-menu-trigger-row">
+          <a className="mega-menu-link" href="https://eprcug.org/about/" target="_blank" rel="noreferrer">ABOUT</a>
+          <button type="button" className="mega-submenu-toggle" aria-expanded={expandedMenu === "about"} aria-label="Toggle About submenu" onClick={() => toggleMenuSection("about")}>
+            <span className="mega-indicator" aria-hidden="true"></span>
+          </button>
+        </div>
+        <ul className="mega-sub-menu" style={{ "--columns": "4" } as React.CSSProperties}>
+          <li><a className="mega-menu-link" href="https://eprcug.org/board-of-directors/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>BOARD OF DIRECTORS</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/eprc-management/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC MANAGEMENT</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/staff/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>STAFF</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/eprc-partners/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC PARTNERS</a></li>
+          <li className="mega-current-menu-item"><a className="mega-menu-link" href="https://eprcug.org/careers/" target="_blank" rel="noreferrer" aria-current="page" onClick={closeMobileMenu}>CAREERS</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/opportunities/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>OPPORTUNITIES</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/procurements/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>PROCUREMENTS</a></li>
+          <li><a className="mega-menu-link" href="https://eprcug.org/faqs/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>FAQs</a></li>
+        </ul>
+      </li>
+
+      <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
+        <a className="mega-menu-link" href="https://eprcug.org/contact/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>CONTACT</a>
+      </li>
+    </>
+  );
+
   return (
     <div id="page" className="site">
+
+      {/* Mobile slide-in panel — portaled to document.body to escape header stacking context */}
+      {createPortal(
+        <div className={`mobile-nav-panel${mobileMenuOpen ? " is-open" : ""}`}>
+          <div className="mobile-nav-overlay" onClick={closeMobileMenu}></div>
+          <div className="mobile-nav-drawer">
+            <div className="mobile-nav-header">
+              <img src="https://eprcug.org/wp-content/uploads/2020/08/logo.png" alt="EPRC" className="mobile-nav-logo" />
+              <button className="mobile-nav-close" onClick={closeMobileMenu} aria-label="Close menu">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+            <nav aria-label="Mobile navigation">
+              <ul className="mega-menu max-mega-menu mobile-mega-menu">
+                {renderMainNavItems()}
+              </ul>
+            </nav>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Top contact bar */}
       <div className="subheader fixed">
@@ -50,6 +147,8 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
                 <button
                   className="hamburger-button"
                   aria-label="Hamburger"
+                  aria-expanded={mobileMenuOpen}
+                  aria-controls="mobile-navigation-panel"
                   onClick={() => {
                     setMobileMenuOpen((open) => {
                       if (open) {
@@ -80,156 +179,13 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
             <div className="right-part">
               <nav
                 id="site-navigation"
-                className={`nav with-multi-level-indicators with-highlighted-menu hide-mobile-menu-images hide-mobile-menu-descriptions${mobileMenuOpen ? " opened" : ""}`}
+                className="nav with-multi-level-indicators with-highlighted-menu"
               >
-                <div className={`slide-in-overlay menu-slide-in-overlay${mobileMenuOpen ? " opened" : ""}`}>
-                  <div className="overlay" onClick={closeMobileMenu}></div>
-                  <div className="close-bar">
-                    <button
-                      className="icon-button -overlay-button"
-                      aria-label="Close"
-                      onClick={closeMobileMenu}
-                    >
-                      <i className="icon">
-                        <svg className="default" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z" />
-                        </svg>
-                      </i>
-                    </button>
-                  </div>
-                  <div className="holder">
-                    <div id="mega-menu-wrap" className="nav-container">
-                      <div id="mega-menu-wrap-primary" className="mega-menu-wrap">
-                        <ul id="mega-menu-primary" className="mega-menu max-mega-menu mega-menu-horizontal">
-
-                          <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
-                            <a className="mega-menu-link" href="https://eprcug.org/" target="_blank" rel="noreferrer">Home</a>
-                          </li>
-
-                          <li className="mega-menu-item mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/publication/" target="_blank" rel="noreferrer">Publications</a>
-                          </li>
-
-                          <li className="mega-menu-item mega-align-bottom-left mega-menu-megamenu">
-                            <a className="mega-menu-link" href="https://eprcug.org/research/" target="_blank" rel="noreferrer">Research</a>
-                          </li>
-
-                          <li className={`mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "projects" ? " expanded" : ""}`}>
-                            <div className="mega-menu-trigger-row">
-                              <a className="mega-menu-link" href="https://eprcug.org/projects/" target="_blank" rel="noreferrer">
-                                PROJECTS
-                              </a>
-                              <button
-                                type="button"
-                                className="mega-submenu-toggle"
-                                aria-expanded={expandedMenu === "projects"}
-                                aria-label="Toggle Projects submenu"
-                                onClick={() => toggleMenuSection("projects")}
-                              >
-                                <span className="mega-indicator" aria-hidden="true"></span>
-                              </button>
-                            </div>
-                            <ul className="mega-sub-menu">
-                              <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/new-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>New Projects</a>
-                              </li>
-                              <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/ongoing-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Ongoing Projects</a>
-                              </li>
-                              <li style={{ "--columns": "3", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/projects/completed-projects/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Completed Projects</a>
-                              </li>
-                            </ul>
-                          </li>
-
-                          <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
-                            <a className="mega-menu-link" href="https://eprcug.org/blogs/" target="_blank" rel="noreferrer">Blogs</a>
-                          </li>
-
-                          <li className={`mega-menu-item mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "media-centre" ? " expanded" : ""}`}>
-                            <div className="mega-menu-trigger-row">
-                              <a className="mega-menu-link" href="https://eprcug.org/media-centre/" target="_blank" rel="noreferrer">
-                                MEDIA CENTRE
-                              </a>
-                              <button
-                                type="button"
-                                className="mega-submenu-toggle"
-                                aria-expanded={expandedMenu === "media-centre"}
-                                aria-label="Toggle Media Centre submenu"
-                                onClick={() => toggleMenuSection("media-centre")}
-                              >
-                                <span className="mega-indicator" aria-hidden="true"></span>
-                              </button>
-                            </div>
-                            <ul className="mega-sub-menu">
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-highlights/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC Highlights</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-in-the-news/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC In The News</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/press-releases/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Press Releases</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/gallery/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Gallery</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://www.youtube.com/@EprcugOrgUganda/videos" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Videos</a>
-                              </li>
-                            </ul>
-                          </li>
-
-                          <li className={`mega-menu-item mega-current-menu-ancestor mega-menu-item-has-children mega-align-bottom-left mega-menu-megamenu${expandedMenu === "about" ? " expanded" : ""}`}>
-                            <div className="mega-menu-trigger-row">
-                              <a className="mega-menu-link" href="https://eprcug.org/about/" target="_blank" rel="noreferrer">
-                                ABOUT
-                              </a>
-                              <button
-                                type="button"
-                                className="mega-submenu-toggle"
-                                aria-expanded={expandedMenu === "about"}
-                                aria-label="Toggle About submenu"
-                                onClick={() => toggleMenuSection("about")}
-                              >
-                                <span className="mega-indicator" aria-hidden="true"></span>
-                              </button>
-                            </div>
-                            <ul className="mega-sub-menu">
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/board-of-directors/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Board of Directors</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-management/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC Management</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/staff/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Staff</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/eprc-partners/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>EPRC Partners</a>
-                              </li>
-                              <li className="mega-current-menu-item" style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/careers/" target="_blank" rel="noreferrer" aria-current="page" onClick={closeMobileMenu}>Careers</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/opportunities/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Opportunities</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/procurements/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>Procurements</a>
-                              </li>
-                              <li style={{ "--columns": "5", "--span": "1" } as React.CSSProperties}>
-                                <a className="mega-menu-link" href="https://eprcug.org/faqs/" target="_blank" rel="noreferrer" onClick={closeMobileMenu}>FAQs</a>
-                              </li>
-                            </ul>
-                          </li>
-
-                          <li className="mega-menu-item mega-align-bottom-left mega-menu-flyout">
-                            <a className="mega-menu-link" href="https://eprcug.org/contact/" target="_blank" rel="noreferrer">Contact</a>
-                          </li>
-
-                        </ul>
-                      </div>
-                    </div>
+                <div id="mega-menu-wrap" className="nav-container">
+                  <div id="mega-menu-wrap-primary" className="mega-menu-wrap">
+                    <ul id="mega-menu-primary" className="mega-menu max-mega-menu mega-menu-horizontal">
+                      {renderMainNavItems()}
+                    </ul>
                   </div>
                 </div>
               </nav>
