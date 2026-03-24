@@ -309,7 +309,7 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
             {/* Col 2 — Our Work links */}
             <div className="vc_col-md-3 vc_col-sm-6 widgets-column">
               <ul>
-                <li className="widget widget_block"><h6 className="wp-block-heading">Our Work</h6></li>
+                <li className="widget widget_block"><h6 className="wp-block-heading footer-section-heading">OUR WORK</h6></li>
                 <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/annual-reports/" target="_blank" rel="noreferrer">Annual Reports</a></p></li>
                 <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/books" target="_blank" rel="noreferrer">Books/Book Chapters</a></p></li>
                 <li className="widget widget_block widget_text"><p><a href="https://eprcug.org/publications/policy-notes/" target="_blank" rel="noreferrer">Policy Notes</a></p></li>
@@ -324,14 +324,14 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
             <div className="vc_col-md-3 vc_col-sm-6 widgets-column">
               <ul>
                 <li className="widget widget_ohio_widget_contact">
-                  <h3 className="title widget-title">Contact info</h3>
+                  <h3 className="title widget-title footer-section-heading">CONTACT INFO</h3>
                   <ul className="list-box contact-module">
                     <li>Phone: <address>+256-414-541-023/4</address></li>
                     <li>Email: <address>eprc@eprcug.org</address></li>
                     <li>Address: <address>Plot 51, Pool Road, Makerere University</address></li>
                   </ul>
                 </li>
-                <li className="widget widget_block"><h6 className="wp-block-heading">Follow us</h6></li>
+                <li className="widget widget_block"><h6 className="wp-block-heading footer-section-heading">FOLLOW US</h6></li>
                 <li className="widget widget_block">
                   <ul className="wp-block-social-links is-layout-flex wp-block-social-links-is-layout-flex">
                     <li className="wp-social-link wp-social-link-facebook wp-block-social-link">
@@ -374,7 +374,7 @@ export default function EprcLayout({ children, pageTitle = "Careers" }: EprcLayo
             {/* Col 4 — Newsletter */}
             <div className="vc_col-md-3 vc_col-sm-6 widgets-column">
               <div className="widget">
-                <h3 className="title widget-title">Newsletter Signup</h3>
+                <h3 className="title widget-title footer-section-heading">NEWSLETTER SIGNUP</h3>
                 <form action="https://eprcug.org/newsletter" method="post" target="_blank" rel="noreferrer">
                   <div className="inner-wrap">
                     <div className="email-wrap">

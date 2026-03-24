@@ -148,6 +148,15 @@ All colors MUST be HSL.
   opacity: 0.8;
 }
 
+.site-footer h3.footer-section-heading,
+.site-footer h6.footer-section-heading,
+.site-footer .widget-title.footer-section-heading,
+.site-footer .wp-block-heading.footer-section-heading {
+  color: #22a5d8 !important;
+  -webkit-text-fill-color: #22a5d8 !important;
+  opacity: 1 !important;
+}
+
 /* 2. Header and navigation */
 .site {
   min-height: 100vh;
