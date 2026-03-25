@@ -1,123 +1,66 @@
-import { Client as MinioClient } from "minio";
-import { Readable } from "stream";
+// ── Storage provider factory ──────────────────────────────────────────────────
+//
+// This module selects the active storage backend at startup via the
+// STORAGE_PROVIDER environment variable and re-exports a stable set of
+// standalone functions so that all callers (routes, index.ts) are unchanged.
+//
+// STORAGE_PROVIDER=minio         (default) → MinioStorageProvider
+// STORAGE_PROVIDER=s3                       → S3StorageProvider (AWS S3, Cloudflare R2, …)
+// STORAGE_PROVIDER=vercel-blob              → VercelBlobStorageProvider
+//
+// See api/src/storage/{minio,s3,vercel-blob}.ts for required env vars per provider.
 
-export const BUCKET = "application-files";
-const SIGNED_URL_TTL = 86400; // 24 hours — used only when no public URL is configured
+import type { StorageProvider } from "./storage/types.js";
+import { MinioStorageProvider } from "./storage/minio.js";
+import { S3StorageProvider } from "./storage/s3.js";
+import { VercelBlobStorageProvider } from "./storage/vercel-blob.js";
 
-// When set, file URLs returned to Odoo point to the portal's own file-proxy
-// endpoint (/functions/v1/files/*) instead of directly to MinIO.
-// The API streams the file from MinIO internally — Odoo never needs to reach
-// MinIO across the network. Set to the portal's public HTTPS base URL.
-// Example: https://jobs.eprc.example.com
-const MINIO_PUBLIC_URL = process.env.MINIO_PUBLIC_URL?.replace(/\/$/, "") || null;
+export type { FileInfo, PresignResult } from "./storage/types.js";
 
-const endpoint = process.env.MINIO_ENDPOINT;
-const port = parseInt(process.env.MINIO_PORT ?? "9000", 10);
-const useSSL = process.env.MINIO_USE_SSL === "true";
-const accessKey = process.env.MINIO_ROOT_USER;
-const secretKey = process.env.MINIO_ROOT_PASSWORD;
+const providerName = (process.env.STORAGE_PROVIDER ?? "minio").toLowerCase();
 
-if (!endpoint || !accessKey || !secretKey) {
-  throw new Error(
-    "Missing MinIO environment variables: MINIO_ENDPOINT, MINIO_ROOT_USER, MINIO_ROOT_PASSWORD"
-  );
+let _provider: StorageProvider;
+
+if (providerName === "s3") {
+  _provider = new S3StorageProvider();
+} else if (providerName === "vercel-blob") {
+  _provider = new VercelBlobStorageProvider();
+} else {
+  _provider = new MinioStorageProvider();
 }
 
-export const minio = new MinioClient({
-  endPoint: endpoint,
-  port,
-  useSSL,
-  accessKey,
-  secretKey,
-});
+// ── Standalone function exports ───────────────────────────────────────────────
+// These thin wrappers delegate to the active provider and keep all existing
+// call-sites (index.ts, routes/*) unchanged.
 
-/**
- * Idempotent bucket setup — called once at API startup.
- * Creates the application-files bucket if it does not already exist.
- * Bucket stays PRIVATE — all access is via presigned URLs.
- */
-export async function ensureBucket(): Promise<void> {
-  const exists = await minio.bucketExists(BUCKET);
-  if (!exists) {
-    await minio.makeBucket(BUCKET);
-    console.log(`[storage] Created bucket: ${BUCKET}`);
-  } else {
-    console.log(`[storage] Bucket already exists: ${BUCKET}`);
-  }
+export function ensureBucket(): Promise<void> {
+  return _provider.ensureBucket();
 }
 
-/**
- * Upload a readable stream (or Buffer) to MinIO.
- * Pass originalFilename to preserve the submitter's filename in the
- * file-proxy Content-Disposition header on download.
- * Returns the stored object path (relative to bucket root).
- */
-export async function uploadFile(
+export function uploadFile(
   objectPath: string,
-  stream: Readable | Buffer,
+  data: import("stream").Readable | Buffer,
   contentType: string,
   size?: number,
   originalFilename?: string
 ): Promise<string> {
-  const metaData: Record<string, string> = { "Content-Type": contentType };
-  if (originalFilename) {
-    metaData["original-filename"] = originalFilename;
-  }
-  if (Buffer.isBuffer(stream)) {
-    await minio.putObject(BUCKET, objectPath, stream, stream.length, metaData);
-  } else {
-    await minio.putObject(
-      BUCKET,
-      objectPath,
-      stream,
-      size ?? undefined,
-      metaData
-    );
-  }
-  return objectPath;
+  return _provider.uploadFile(objectPath, data, contentType, size, originalFilename);
 }
 
-/**
- * Return a URL for downloading a stored file.
- *
- * When MINIO_PUBLIC_URL is set (production/staging):
- *   Returns a portal file-proxy URL: {PUBLIC_URL}/functions/v1/files/{objectPath}
- *   The API streams the file from MinIO internally — the caller never reaches
- *   MinIO directly. No expiry; bearer auth on the proxy endpoint is the gate.
- *
- * When MINIO_PUBLIC_URL is not set (local dev):
- *   Falls back to a direct MinIO presigned URL valid for 24 hours.
- *
- * Returns the same shape as the old presignFile helper so all call-sites are
- * unchanged. expiresAt is null for proxy URLs (they don't expire).
- */
-export async function presignFile(
+export function presignFile(
   objectPath: string | null | undefined
 ): Promise<{ signedUrl: string; expiresAt: string | null } | null> {
-  if (!objectPath) return null;
+  return _provider.presignFile(objectPath);
+}
 
-  if (MINIO_PUBLIC_URL) {
-    // Encode each path segment (handles spaces/special chars) but keep "/" as
-    // path separators so Fastify routes the wildcard correctly.
-    const encodedPath = objectPath
-      .split("/")
-      .map(encodeURIComponent)
-      .join("/");
-    return {
-      signedUrl: `${MINIO_PUBLIC_URL}/functions/v1/files/${encodedPath}`,
-      expiresAt: null,
-    };
-  }
+export function statObject(
+  objectPath: string
+): Promise<import("./storage/types.js").FileInfo> {
+  return _provider.statObject(objectPath);
+}
 
-  // Local dev fallback — direct MinIO presigned URL
-  try {
-    const url = await minio.presignedGetObject(BUCKET, objectPath, SIGNED_URL_TTL);
-    return {
-      signedUrl: url,
-      expiresAt: new Date(Date.now() + SIGNED_URL_TTL * 1000).toISOString(),
-    };
-  } catch (err) {
-    console.warn(`[storage] Failed to presign ${objectPath}:`, err);
-    return null;
-  }
+export function getObject(
+  objectPath: string
+): Promise<import("stream").Readable> {
+  return _provider.getObject(objectPath);
 }

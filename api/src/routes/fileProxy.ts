@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { minio, BUCKET } from "../storage.js";
+import { statObject, getObject } from "../storage.js";
 import { bearerAuth } from "../middleware/bearerAuth.js";
 
 // ── File-proxy route ──────────────────────────────────────────────────────────
@@ -34,13 +34,10 @@ const fileProxyRoutes: FastifyPluginAsync = async (fastify) => {
       let contentLength: number | undefined;
 
       try {
-        const stat = await minio.statObject(BUCKET, objectPath);
-        contentType =
-          (stat.metaData?.["content-type"] as string | undefined) ??
-          "application/octet-stream";
-        originalFilename =
-          (stat.metaData?.["original-filename"] as string | undefined) ?? null;
-        contentLength = stat.size > 0 ? stat.size : undefined;
+        const info = await statObject(objectPath);
+        contentType = info.contentType;
+        originalFilename = info.originalFilename;
+        contentLength = info.contentLength;
       } catch {
         return reply.status(404).send({ error: "File not found" });
       }
@@ -65,10 +62,10 @@ const fileProxyRoutes: FastifyPluginAsync = async (fastify) => {
         reply.header("Content-Length", contentLength);
       }
 
-      // ── Stream from MinIO ─────────────────────────────────────────────────
+      // ── Stream from storage provider ──────────────────────────────────────
       let stream;
       try {
-        stream = await minio.getObject(BUCKET, objectPath);
+        stream = await getObject(objectPath);
       } catch {
         return reply.status(404).send({ error: "File not found" });
       }
