@@ -1,0 +1,30 @@
+{
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/functions/v1/odoo-get-jobs",
+      "destination": "/api/odoo/get-jobs"
+    },
+    {
+      "source": "/functions/v1/odoo-push-job",
+      "destination": "/api/odoo/push-job"
+    },
+    {
+      "source": "/functions/v1/odoo-get-applications",
+      "destination": "/api/odoo/get-applications"
+    },
+    {
+      "source": "/functions/v1/odoo-patch-application",
+      "destination": "/api/odoo/patch-application"
+    },
+    {
+      "source": "/functions/v1/files/(.*)",
+      "destination": "/api/odoo/files/$1"
+    },
+    {
+      "source": "/((?!api|_next|favicon\\.ico|robots\\.txt).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

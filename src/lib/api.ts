@@ -1,7 +1,8 @@
 /**
  * Base URL for all API calls.
- * Points to the Fastify API service — set VITE_API_URL at build time.
- * Falls back to /api so the Nginx reverse proxy handles routing in production
- * without needing the full domain baked in.
+ *
+ * On Vercel the frontend and the serverless functions share the same domain,
+ * so /api resolves correctly without any extra configuration.
+ * Set VITE_API_URL only when you need to override (e.g. a local dev API server).
  */
 export const API_BASE = import.meta.env.VITE_API_URL || "/api";

@@ -1,3 +1,4 @@
+import { upload } from "@vercel/blob/client";
 import { API_BASE } from "@/lib/api";
 
 /* ------------------------------------------------------------------ */
@@ -48,53 +49,66 @@ export interface ApplicationPayload {
 /* ------------------------------------------------------------------ */
 
 /**
- * Submit a complete job application to the API.
+ * Submit a complete job application.
  *
- * Sends a single multipart/form-data POST to POST /api/applications.
- * The API handles all DB inserts and file uploads to MinIO atomically.
- * File fields: cv (required), accolade_0 … accolade_N (optional per education row).
+ * Upload flow (Vercel Blob):
+ *   1. Upload the CV directly to Vercel Blob via the client SDK.
+ *      The browser streams the file to Vercel's CDN; no file bytes hit the
+ *      serverless function.
+ *   2. Upload each accolade file the same way.
+ *   3. POST a JSON body containing the blob URLs and all structured data
+ *      to POST /api/applications.
  */
 export async function submitApplication(
   payload: ApplicationPayload
 ): Promise<{ applicationId: string }> {
-  const form = new FormData();
 
-  // ── Scalar fields ────────────────────────────────────────────────
-  form.append("full_name", payload.fullName);
-  form.append("email",     payload.email);
-  form.append("phone",     payload.phone);
-  form.append("summary",   payload.summary);
-  form.append("job_id",    payload.jobId);
+  // ── Step 1: Upload CV ────────────────────────────────────────────────────
+  const cvBlob = await upload(
+    `applications/cv/${Date.now()}_${payload.cv.name}`,
+    payload.cv,
+    { access: "public", handleUploadUrl: `${API_BASE}/blob/upload-url` }
+  );
 
-  // ── Structured arrays as JSON ────────────────────────────────────
-  // Strip the File object from education before JSON-encoding;
-  // accolade files are sent as separate named file fields.
-  const educationMeta = payload.education.map((edu) => ({
-    qualification: edu.qualification,
-    level:         edu.level,
-    field:         edu.field,
-    institution:   edu.institution,
-    yearCompleted: edu.yearCompleted,
-  }));
-  form.append("experience", JSON.stringify(payload.experience));
-  form.append("education",  JSON.stringify(educationMeta));
+  // ── Step 2: Upload accolades ─────────────────────────────────────────────
+  const educationWithUrls = await Promise.all(
+    payload.education.map(async (edu) => {
+      let accolade_url: string | null = null;
+      if (edu.accolade) {
+        const rand = Math.random().toString(36).slice(2, 7);
+        const accoBlob = await upload(
+          `applications/accolades/${Date.now()}_${rand}_${edu.accolade.name}`,
+          edu.accolade,
+          { access: "public", handleUploadUrl: `${API_BASE}/blob/upload-url` }
+        );
+        accolade_url = accoBlob.url;
+      }
+      return {
+        qualification: edu.qualification,
+        level:         edu.level,
+        field:         edu.field,
+        institution:   edu.institution,
+        yearCompleted: edu.yearCompleted,
+        accolade_url,
+      };
+    })
+  );
 
-  // ── Question answers ─────────────────────────────────────────────
-  if (payload.questionAnswers.length > 0) {
-    form.append("question_answers", JSON.stringify(payload.questionAnswers));
-  }
-
-  // ── File fields ──────────────────────────────────────────────────
-  form.append("cv", payload.cv);
-  payload.education.forEach((edu, idx) => {
-    if (edu.accolade) {
-      form.append(`accolade_${idx}`, edu.accolade);
-    }
-  });
-
+  // ── Step 3: POST structured JSON (no files) ──────────────────────────────
   const res = await fetch(`${API_BASE}/applications`, {
     method: "POST",
-    body: form,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      full_name:        payload.fullName,
+      email:            payload.email,
+      phone:            payload.phone,
+      summary:          payload.summary,
+      job_id:           payload.jobId,
+      cv_url:           cvBlob.url,
+      experience:       payload.experience,
+      education:        educationWithUrls,
+      question_answers: payload.questionAnswers,
+    }),
   });
 
   if (!res.ok) {

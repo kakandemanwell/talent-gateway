@@ -43,7 +43,7 @@ services:
   # ── API (Node.js / Fastify) ─────────────────────────────────────────────────
   api:
     build:
-      context: ./api
+      context: ./server
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
