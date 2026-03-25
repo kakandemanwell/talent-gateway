@@ -1,8 +1,285 @@
 # EPRC Jobs Portal
 
-A self-hosted recruitment portal that publishes job vacancies, accepts candidate
+A recruitment portal that publishes job vacancies, accepts candidate
 applications (with file uploads), and synchronises with an Odoo HR back-end via
 a REST gateway API.
+
+Deployed on **Vercel** (frontend + serverless API), backed by **Neon** (PostgreSQL)
+and **Vercel Blob** (file storage).
+
+---
+
+## Architecture
+
+```
+Internet
+   │
+   ▼
+Vercel Edge
+   ├── /* (React SPA)             → dist/         (static, CDN-cached)
+   ├── /api/jobs*                 → api/jobs/      (serverless)
+   ├── /api/applications          → api/applications.ts (serverless)
+   ├── /api/blob/upload-url       → api/blob/upload-url.ts (serverless)
+   ├── /api/odoo/*                → api/odoo/      (serverless, bearer auth)
+   └── /functions/v1/*            → rewrites → api/odoo/* (Odoo compat)
+
+Neon (PostgreSQL)    ← all structured data
+Vercel Blob CDN      ← CV and accolade files (direct browser upload)
+```
+
+### File upload flow
+
+Files bypass the serverless function entirely to stay well under Vercel's
+4.5 MB request body limit:
+
+```
+Browser → POST /api/blob/upload-url  (get a short-lived upload token)
+Browser → PUT  <blob CDN>            (stream bytes directly to CDN)
+Browser → POST /api/applications     (JSON body with blob URLs, no files)
+API     → INSERT into Neon DB        (stores blob URL as cv_file_path)
+```
+
+Odoo receives the blob URL directly from `GET /functions/v1/odoo-get-applications`
+and fetches the file from the CDN. No proxy, no URL expiry.
+
+---
+
+## Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start Vite dev server (frontend only, hot reload)
+npm run dev
+```
+
+For a full local stack including the serverless functions, use the
+[Vercel CLI](https://vercel.com/docs/cli):
+
+```bash
+npm i -g vercel
+vercel dev        # runs both the Vite dev server and the api/ functions
+```
+
+Set the required environment variables in `.env.local` (copied from
+`.env.example`).
+
+---
+
+## Deploying to Vercel
+
+### 1. Create Vercel services
+
+In the [Vercel dashboard](https://vercel.com):
+
+1. **Import** this repository as a new project.
+2. **Framework preset**: Vite (auto-detected).
+3. **Build command**: `vite build` · **Output directory**: `dist`.
+4. Go to **Storage** and:
+   - Create a **Neon** database and link it to the project.
+     Copy the *pooled* connection string for `DATABASE_URL`.
+   - Create a **Blob** store and link it to the project.
+     `BLOB_READ_WRITE_TOKEN` is injected automatically.
+
+### 2. Set environment variables
+
+In **Vercel → Project → Settings → Environment Variables**, add:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Neon pooler connection string (`-pooler.neon.tech`) |
+| `BLOB_READ_WRITE_TOKEN` | Auto-injected when Blob store is linked |
+| `ODOO_API_KEY` | Shared secret for all Odoo-facing routes (min 32 chars hex) |
+| `ALLOWED_ORIGIN` | Your deployment URL, e.g. `https://your-project.vercel.app` |
+
+`VITE_API_URL` does **not** need to be set — the frontend and the API share the
+same origin on Vercel, so `/api` resolves automatically.
+
+#### Generating secrets safely
+
+```bash
+node -e "console.log(require('crypto').randomBytes(40).toString('hex'))"
+```
+
+Use this for `ODOO_API_KEY`. The output contains only `0-9 a-f` characters,
+which is safe in all contexts.
+
+### 3. Run database migrations
+
+Connect to your Neon database and run the SQL files in `supabase/`:
+
+```bash
+# Using psql (replace with your Neon connection string)
+psql "$DATABASE_URL" -f supabase/migration_full.sql
+```
+
+Or paste the contents into the Neon SQL Editor in the dashboard.
+
+### 4. Deploy
+
+```bash
+vercel --prod
+```
+
+Or push to the tracked branch — Vercel deploys automatically on every push.
+
+---
+
+## Odoo Integration
+
+### Gateway endpoint reference
+
+Set **Gateway Base URL** in the Odoo module to the portal root (no trailing
+slash). The module appends `/functions/v1/<route>` automatically.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `HEAD` | `/functions/v1/odoo-get-jobs` | Test connection / liveness check |
+| `GET`  | `/functions/v1/odoo-get-jobs` | Retrieve all published jobs |
+| `POST` | `/functions/v1/odoo-push-job` | Create or update a job vacancy |
+| `GET`  | `/functions/v1/odoo-get-applications` | Pull new applications with file URLs |
+| `PATCH`| `/functions/v1/odoo-patch-application` | Mark an application as imported |
+
+All five endpoints require:
+
+```
+Authorization: Bearer <ODOO_API_KEY>
+```
+
+---
+
+### Job sync (Odoo → Portal)
+
+Odoo calls `POST /functions/v1/odoo-push-job` whenever an `hr.job` record is
+created, written, or archived. The gateway upserts the job keyed on `job_id`.
+
+**Request body:**
+
+```json
+{
+  "job_id":       "OD-1",
+  "title":        "Software Engineer",
+  "department":   "ICT",
+  "location":     "Nairobi",
+  "closing_date": "2026-04-30",
+  "description":  "<html or plain text>",
+  "is_active":    true
+}
+```
+
+---
+
+### Application sync (Portal → Odoo)
+
+Odoo calls `GET /functions/v1/odoo-get-applications` (typically via a daily
+cron at 17:00 EAT) to pull applications not yet imported.
+
+**Query parameters:**
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `job_ids` | yes | Comma-separated Odoo job IDs, e.g. `OD-1,OD-5` |
+| `status`  | no  | `gateway_sync_status` filter. Defaults to `new`. |
+| `application_refs` | no | Comma-separated application UUIDs — bypasses `job_ids`/`status` and refreshes those specific records (retry workflow). |
+
+**Response shape (abbreviated):**
+
+```jsonc
+{
+  "applications": [
+    {
+      "application_ref": "<uuid>",
+      "job_id": "OD-1",
+      "submitted_at": "2026-03-15T10:30:00.000Z",
+      "personal": {
+        "full_name": "Jane Doe",
+        "email": "jane@example.com",
+        "phone": "+254700000000"
+      },
+      "summary": "Experienced engineer...",
+      "cv_url": "https://<hash>.public.blob.vercel-storage.com/applications/cv/...",
+      "cv_url_expires_at": null,   // Vercel Blob URLs do not expire
+      "experience": [ ... ],
+      "education": [
+        {
+          "qualification": "Bachelor of Science",
+          "level": "bachelor",
+          "field_of_study": "Computer Science",
+          "institution": "University of Nairobi",
+          "year_completed": 2019,
+          "accolade_url": "https://<hash>.public.blob.vercel-storage.com/applications/accolades/..."
+        }
+      ],
+      "question_answers": [ ... ]
+    }
+  ],
+  "total": 1,
+  "fetched_at": "2026-03-15T10:30:00.000Z"
+}
+```
+
+File URLs are direct Vercel Blob CDN links — Odoo fetches them with a plain
+GET request, no authentication or expiry window required.
+
+---
+
+### Marking applications as imported (PATCH)
+
+After Odoo creates an `hr.applicant` record it must call:
+
+```
+PATCH /functions/v1/odoo-patch-application
+Authorization: Bearer <ODOO_API_KEY>
+Content-Type: application/json
+
+{
+  "application_ref":   "<uuid>",
+  "status":            "imported",
+  "odoo_applicant_id": 42
+}
+```
+
+This sets `gateway_sync_status = 'imported'` so the record is excluded from
+future sync calls. Allowed `status` values: `"imported"` | `"failed"` | `"new"`.
+
+---
+
+## Useful Commands
+
+```bash
+# Run frontend unit tests
+npm run test
+
+# Type-check the API functions
+cd api && npx tsc --noEmit
+
+# Verify Vercel function routing locally
+vercel dev
+```
+
+---
+
+## File Reference
+
+```
+api/
+  _lib/          Shared utilities (db, auth, storage, helpers)
+  jobs/          GET /api/jobs  and  GET /api/jobs/:id
+  applications.ts POST /api/applications  (accepts JSON with blob URLs)
+  blob/          POST /api/blob/upload-url  (issues Vercel Blob upload token)
+  odoo/          All Odoo-facing routes (bearer auth)
+    get-jobs.ts
+    push-job.ts
+    get-applications.ts
+    patch-application.ts
+    files/[...path].ts   Backward-compat redirect to blob URL
+
+src/             React frontend (Vite)
+supabase/        Database migration SQL files
+vercel.json      Route rewrites and build config
+```
+
 
 ---
 
