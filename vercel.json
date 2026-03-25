@@ -4,7 +4,18 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "$API_HOST/api/:path*"
+    },
+    {
+      "source": "/functions/:path*",
+      "destination": "$API_HOST/functions/:path*"
+    },
+    {
+      "source": "/((?!api/|functions/).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
