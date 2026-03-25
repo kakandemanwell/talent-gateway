@@ -1,0 +1,9 @@
+# The Fastify API is deployed separately (Railway / Render / Fly.io).
+# Exclude it so Vercel does not try to create serverless functions from
+# the api/src/*.ts files (which would exceed the Hobby plan limit of 12).
+api/
+
+# Also exclude build artifacts and tooling not needed for the frontend build
+docker/
+supabase/
+*.md
