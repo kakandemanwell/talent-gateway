@@ -23,8 +23,8 @@ import postgres from "postgres";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error("[migrate] ERROR: DATABASE_URL environment variable is not set.");
-  process.exit(1);
+  console.log("[migrate] No DATABASE_URL set — skipping migration (local build).");
+  process.exit(0);
 }
 
 const sql = postgres(DATABASE_URL, {
