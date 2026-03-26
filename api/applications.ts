@@ -1,6 +1,8 @@
 import sql from "./_lib/db.js";
 import { corsHeaders, handleOptions, normaliseLevelKey } from "./_lib/helpers.js";
 
+export const config = { runtime: 'edge' };
+
 /**
  * POST /api/applications
  *

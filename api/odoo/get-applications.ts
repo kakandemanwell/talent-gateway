@@ -3,6 +3,8 @@ import { bearerAuth } from "../_lib/auth.js";
 import { presignFile } from "../_lib/storage.js";
 import { padToFullDate } from "../_lib/helpers.js";
 
+export const config = { runtime: 'edge' };
+
 /**
  * GET /functions/v1/odoo-get-applications
  *

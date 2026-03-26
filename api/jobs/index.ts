@@ -1,6 +1,8 @@
 import sql from "../_lib/db.js";
 import { corsHeaders, handleOptions } from "../_lib/helpers.js";
 
+export const config = { runtime: 'edge' };
+
 /**
  * GET /api/jobs
  *

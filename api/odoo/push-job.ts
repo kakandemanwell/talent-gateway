@@ -1,6 +1,8 @@
 import sql from "../_lib/db.js";
 import { bearerAuth } from "../_lib/auth.js";
 
+export const config = { runtime: 'edge' };
+
 interface PushJobSkill {
   name: string;
   type?: string | null;

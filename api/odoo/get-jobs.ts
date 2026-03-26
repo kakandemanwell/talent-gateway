@@ -1,6 +1,8 @@
 import sql from "../_lib/db.js";
 import { bearerAuth } from "../_lib/auth.js";
 
+export const config = { runtime: 'edge' };
+
 /**
  * GET  /functions/v1/odoo-get-jobs  → rewrites to this function
  * HEAD /functions/v1/odoo-get-jobs  → used by Odoo's "Test Connection" button

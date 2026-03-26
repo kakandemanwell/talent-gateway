@@ -1,6 +1,8 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { corsHeaders, handleOptions } from "../_lib/helpers.js";
 
+export const config = { runtime: 'edge' };
+
 /**
  * POST /api/blob/upload-url
  *
