@@ -1,4 +1,4 @@
-import { upload } from "@vercel/blob/client";
+import { put } from "@vercel/blob/client";
 import { API_BASE } from "@/lib/api";
 
 /* ------------------------------------------------------------------ */
@@ -48,26 +48,40 @@ export interface ApplicationPayload {
 /*  Main submission function                                          */
 /* ------------------------------------------------------------------ */
 
+/** Get a short-lived client token then upload a file directly to the CDN. */
+async function uploadToBlob(pathname: string, file: File): Promise<string> {
+  const res = await fetch(`${API_BASE}/blob/upload-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pathname, contentType: file.type }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(err.error ?? `Failed to get upload token: ${res.status}`);
+  }
+  const { clientToken } = await res.json() as { clientToken: string };
+  const blob = await put(pathname, file, { access: "public", token: clientToken });
+  return blob.url;
+}
+
 /**
  * Submit a complete job application.
  *
  * Upload flow (Vercel Blob):
- *   1. Upload the CV directly to Vercel Blob via the client SDK.
- *      The browser streams the file to Vercel's CDN; no file bytes hit the
- *      serverless function.
- *   2. Upload each accolade file the same way.
- *   3. POST a JSON body containing the blob URLs and all structured data
- *      to POST /api/applications.
+ *   1. POST { pathname, contentType } to /api/blob/upload-url to get a
+ *      short-lived client token from the server.
+ *   2. Use put() to stream the file directly to Vercel Blob CDN using
+ *      that token — no callback mechanism, no server round-trip for bytes.
+ *   3. POST a JSON body with the resulting blob URLs to /api/applications.
  */
 export async function submitApplication(
   payload: ApplicationPayload
 ): Promise<{ applicationId: string }> {
 
   // ── Step 1: Upload CV ────────────────────────────────────────────────────
-  const cvBlob = await upload(
+  const cvUrl = await uploadToBlob(
     `applications/cv/${Date.now()}_${payload.cv.name}`,
     payload.cv,
-    { access: "public", handleUploadUrl: `${API_BASE}/blob/upload-url` }
   );
 
   // ── Step 2: Upload accolades ─────────────────────────────────────────────
@@ -76,12 +90,10 @@ export async function submitApplication(
       let accolade_url: string | null = null;
       if (edu.accolade) {
         const rand = Math.random().toString(36).slice(2, 7);
-        const accoBlob = await upload(
+        accolade_url = await uploadToBlob(
           `applications/accolades/${Date.now()}_${rand}_${edu.accolade.name}`,
           edu.accolade,
-          { access: "public", handleUploadUrl: `${API_BASE}/blob/upload-url` }
         );
-        accolade_url = accoBlob.url;
       }
       return {
         qualification: edu.qualification,
@@ -104,7 +116,7 @@ export async function submitApplication(
       phone:            payload.phone,
       summary:          payload.summary,
       job_id:           payload.jobId,
-      cv_url:           cvBlob.url,
+      cv_url:           cvUrl,
       experience:       payload.experience,
       education:        educationWithUrls,
       question_answers: payload.questionAnswers,

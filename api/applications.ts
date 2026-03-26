@@ -154,6 +154,12 @@ export default async function handler(request: Request): Promise<Response> {
     // ── Step 4: Insert question answers ─────────────────────────────────────
     if (questionAnswers.length > 0) {
       for (const qa of questionAnswers) {
+        const optionIds =
+          qa.type === "checkbox"
+            ? (qa.answers ?? null)
+            : qa.answer
+            ? [qa.answer]
+            : null;
         await sql`
           INSERT INTO application_question_answers
             (application_id, question_id, answer_text, answer_option_ids)
@@ -161,11 +167,7 @@ export default async function handler(request: Request): Promise<Response> {
             ${applicationId},
             ${qa.question_id},
             ${qa.type === "text" ? (qa.answer ?? null) : null},
-            ${qa.type === "checkbox"
-              ? (qa.answers ?? null)
-              : qa.answer
-              ? [qa.answer]
-              : null}
+            ${optionIds}::text[]
           )
         `;
       }
