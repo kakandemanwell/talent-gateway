@@ -1,4 +1,3 @@
-import { put } from "@vercel/blob/client";
 import { API_BASE } from "@/lib/api";
 
 /* ------------------------------------------------------------------ */
@@ -48,20 +47,21 @@ export interface ApplicationPayload {
 /*  Main submission function                                          */
 /* ------------------------------------------------------------------ */
 
-/** Get a short-lived client token then upload a file directly to the CDN. */
+/** Upload a file via the server-side proxy — no CORS, no client token. */
 async function uploadToBlob(pathname: string, file: File): Promise<string> {
-  const res = await fetch(`${API_BASE}/blob/upload-url`, {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("pathname", pathname);
+  const res = await fetch(`${API_BASE}/blob/upload`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pathname, contentType: file.type }),
+    body: form,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({})) as { error?: string };
-    throw new Error(err.error ?? `Failed to get upload token: ${res.status}`);
+    throw new Error(err.error ?? `Upload failed: ${res.status}`);
   }
-  const { clientToken } = await res.json() as { clientToken: string };
-  const blob = await put(pathname, file, { access: "public", token: clientToken });
-  return blob.url;
+  const { url } = await res.json() as { url: string };
+  return url;
 }
 
 /**
