@@ -85,7 +85,7 @@ export default async function handler(request: Request): Promise<Response> {
       INSERT INTO jobs (odoo_job_id, title, department, location, closing_date, description, skills, is_active, updated_at)
       VALUES (
         ${body.job_id}, ${body.title}, ${department}, ${location},
-        ${closing_date}, ${description}, ${JSON.stringify(skills)}::jsonb, ${is_active}, now()
+        ${closing_date}, ${description}, ${JSON.stringify(skills)}, ${is_active}, now()
       )
       ON CONFLICT (odoo_job_id) DO UPDATE SET
         title        = EXCLUDED.title,
@@ -93,7 +93,7 @@ export default async function handler(request: Request): Promise<Response> {
         location     = EXCLUDED.location,
         closing_date = EXCLUDED.closing_date,
         description  = EXCLUDED.description,
-        skills       = EXCLUDED.skills,
+        skills       = EXCLUDED.skills::jsonb,
         is_active    = EXCLUDED.is_active,
         updated_at   = now()
       RETURNING id, odoo_job_id

@@ -19,10 +19,8 @@ if (!DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
-const parsed = new URL(DATABASE_URL);
-const SQL_ENDPOINT = `https://${parsed.hostname}/sql`;
-// Neon expects   Authorization: Bearer <role>:<password>
-const BEARER = `${decodeURIComponent(parsed.username)}:${decodeURIComponent(parsed.password)}`;
+// Neon's HTTP API endpoint — same host as the postgres connection string.
+const SQL_ENDPOINT = `https://${new URL(DATABASE_URL).hostname}/sql`;
 
 type Row = Record<string, unknown>;
 
@@ -34,7 +32,9 @@ async function executeQuery<T extends Row = Row>(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${BEARER}`,
+      // Neon authenticates HTTP queries via the full connection string header.
+      // This is the same mechanism used internally by @neondatabase/serverless.
+      "Neon-Connection-String": DATABASE_URL!,
     },
     body: JSON.stringify({ query, params }),
   });
@@ -42,8 +42,8 @@ async function executeQuery<T extends Row = Row>(
   if (!res.ok) {
     let message = res.statusText;
     try {
-      const err = (await res.json()) as { message?: string };
-      if (err.message) message = err.message;
+      const errBody = (await res.json()) as { message?: string; error?: string };
+      message = errBody.message ?? errBody.error ?? message;
     } catch {
       // ignore parse failure, fall back to statusText
     }
