@@ -16,8 +16,9 @@ import { corsHeaders, handleOptions } from "../_lib/helpers.js";
 
 export const config = { runtime: "edge" };
 
-// Vercel Blob internal upload endpoint (server-to-server, no CORS restriction)
-const BLOB_API_URL = "https://blob.vercel-storage.com";
+// Vercel Blob upload endpoint — Vercel sets VERCEL_BLOB_API_URL automatically
+// in Edge/serverless environments; fall back to the known CDN base URL.
+const BLOB_API_URL = process.env.VERCEL_BLOB_API_URL ?? "https://blob.vercel-storage.com";
 const BLOB_API_VERSION = "12";
 
 export default async function handler(request: Request): Promise<Response> {
