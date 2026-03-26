@@ -44,7 +44,7 @@ export default async function handler(request: Request): Promise<Response> {
     const job = rows[0];
 
     // Fetch questions for this job
-    const questions = await sql`
+    const questions = await sql<{ id: string; sequence: number; text: string; type: string; required: boolean; char_limit: number | null }>`
       SELECT id, sequence, text, type, required, char_limit
       FROM job_questions
       WHERE job_id = ${id}
@@ -52,10 +52,10 @@ export default async function handler(request: Request): Promise<Response> {
     `;
 
     // Fetch all options for those questions in one query
-    const questionIds = questions.map((q: { id: string }) => q.id);
+    const questionIds = questions.map((q) => q.id);
     const options =
       questionIds.length > 0
-        ? await sql`
+        ? await sql<{ id: string; question_id: string; sequence: number; label: string }>`
             SELECT id, question_id, sequence, label
             FROM job_question_options
             WHERE question_id = ANY(${questionIds})

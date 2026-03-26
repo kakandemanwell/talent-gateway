@@ -1,7 +1,9 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { corsHeaders, handleOptions } from "../_lib/helpers.js";
 
-export const config = { runtime: 'edge' };
+// Runs as Node.js serverless (not Edge) because @vercel/blob uses Node.js
+// built-ins (stream, crypto, etc.) that are unavailable in the Edge runtime.
+// The token-exchange payload is tiny so the Node.js cold-start is acceptable.
 
 /**
  * POST /api/blob/upload-url
