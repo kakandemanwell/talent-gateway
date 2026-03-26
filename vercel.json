@@ -1,5 +1,6 @@
 {
   "outputDirectory": "dist",
+  "bypassToken": "${VERCEL_AUTOMATION_BYPASS_SECRET}",
   "rewrites": [
     {
       "source": "/functions/v1/odoo-get-jobs",
