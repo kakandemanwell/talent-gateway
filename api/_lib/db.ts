@@ -1,4 +1,4 @@
-import postgres from "postgres";
+import { neon } from "@neondatabase/serverless";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -6,24 +6,13 @@ if (!DATABASE_URL) {
 }
 
 /**
- * postgres.js connection for Neon serverless.
+ * Neon serverless HTTP driver.
  *
- * Key settings for Neon:
- *   prepare: false  — Neon's HTTP pooler does not support prepared statements
- *   max: 1          — each Vercel Serverless invocation is single-request;
- *                     a pool of 1 avoids exhausting Neon's free-tier connection limit
- *
- * Use Neon's pooler connection string (host ends with -pooler.neon.tech) so
- * that short-lived serverless connections don't pile up on pgBouncer.
+ * Uses Neon's own HTTP transport instead of a TCP postgres connection.
+ * This eliminates TCP cold-start hangs in Vercel Serverless Functions —
+ * each query is a plain HTTPS request, so there is no connection pool or
+ * idle timeout to worry about.
  */
-const sql = postgres(DATABASE_URL, {
-  prepare: false,
-  max: 1,
-  idle_timeout: 20,
-  connect_timeout: 10,
-  transform: {
-    undefined: null,
-  },
-});
+const sql = neon(DATABASE_URL);
 
 export default sql;
