@@ -82,31 +82,3 @@ function sql<T extends Row = Row>(
 
 export default sql;
 
-/**
- * Tagged-template SQL function — identical call signature to neon() from
- * @neondatabase/serverless. Interpolated values become positional parameters
- * ($1, $2 …) so no user input ever reaches the query string directly.
- *
- * Example:
- *   const rows = await sql`SELECT * FROM jobs WHERE id = ${jobId}`;
- */
-function sql<T extends Row = Row>(
-  strings: TemplateStringsArray,
-  ...values: unknown[]
-): Promise<T[]> {
-  let query = "";
-  const params: unknown[] = [];
-
-  for (let i = 0; i < strings.length; i++) {
-    query += strings[i];
-    if (i < values.length) {
-      params.push(values[i]);
-      query += `$${params.length}`;
-    }
-  }
-
-  return executeQuery<T>(query, params);
-}
-
-export default sql;
-
