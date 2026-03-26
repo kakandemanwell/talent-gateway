@@ -1,19 +1,10 @@
 import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
 import { corsHeaders, handleOptions } from "../_lib/helpers.js";
 
-// Runs as Node.js serverless (not Edge) because @vercel/blob uses Node.js
-// built-ins (crypto, stream, etc.) unavailable in the Edge runtime.
-//
-// Flow: browser POSTs { pathname, contentType } here → server generates a
-// short-lived client token → browser uses put() to stream the file directly
-// to the Vercel Blob CDN.  No callback mechanism; no round-trips via Vercel.
+export const config = { runtime: 'edge' };
 
-/**
- * POST /api/blob/upload-url
- *
- * Returns a short-lived client token for a single direct blob upload.
- * Body: { pathname: string, contentType?: string }
- */
+// generateClientTokenFromReadWriteToken is a pure local HMAC/JWT operation —
+// no network calls, no Node.js built-ins, safe for the Edge runtime.
 export default async function handler(request: Request): Promise<Response> {
   const preflight = handleOptions(request);
   if (preflight) return preflight;
