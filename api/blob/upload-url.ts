@@ -1,10 +1,57 @@
-import { generateClientTokenFromReadWriteToken } from "@vercel/blob/client";
+// No @vercel/blob import — that package imports Node.js `crypto` and `undici`
+// at the module level which poisons the Edge bundler even for paths never executed.
+// Instead we inline the identical token-generation logic using Web Crypto API,
+// which is available in both Vercel Edge Functions and modern browsers.
 import { corsHeaders, handleOptions } from "../_lib/helpers.js";
 
 export const config = { runtime: 'edge' };
 
-// generateClientTokenFromReadWriteToken is a pure local HMAC/JWT operation —
-// no network calls, no Node.js built-ins, safe for the Edge runtime.
+/**
+ * HMAC-SHA256 sign using Web Crypto subtle API (Edge / browser safe).
+ * Replicates the signPayload() function from @vercel/blob/dist/client.js.
+ */
+async function hmacHex(data: string, secret: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await globalThis.crypto.subtle.sign("HMAC", key, enc.encode(data));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * Replicates generateClientTokenFromReadWriteToken() from @vercel/blob/client
+ * without any Node.js built-ins.  Token format:
+ *   vercel_blob_client_<storeId>_<base64(hmacHex.payloadBase64)>
+ */
+async function generateClientToken(opts: {
+  token: string;
+  pathname: string;
+  allowedContentTypes?: string[];
+  maximumSizeInBytes?: number;
+  addRandomSuffix?: boolean;
+}): Promise<string> {
+  const { token, ...rest } = opts;
+  // storeId is the 4th segment of the rw token: vercel_blob_rw_<storeId>_<secret>
+  const parts = token.split("_");
+  const storeId = parts[3] ?? null;
+  if (!storeId) throw new Error("Invalid BLOB_READ_WRITE_TOKEN");
+
+  const validUntil = Date.now() + 30_000; // 30 s from now
+  const payload = btoa(JSON.stringify({ ...rest, validUntil }));
+  const securedKey = await hmacHex(payload, token);
+
+  // Combine as base64("<hmacHex>.<payloadBase64>")
+  const combined = btoa(`${securedKey}.${payload}`);
+  return `vercel_blob_client_${storeId}_${combined}`;
+}
+
 export default async function handler(request: Request): Promise<Response> {
   const preflight = handleOptions(request);
   if (preflight) return preflight;
@@ -24,7 +71,7 @@ export default async function handler(request: Request): Promise<Response> {
       return Response.json({ error: "pathname is required" }, { status: 422, headers: corsHeaders(request) });
     }
 
-    const clientToken = await generateClientTokenFromReadWriteToken({
+    const clientToken = await generateClientToken({
       token: rwToken,
       pathname,
       allowedContentTypes: [
