@@ -43,7 +43,7 @@ async function generateClientToken(opts: {
   const storeId = parts[3] ?? null;
   if (!storeId) throw new Error("Invalid BLOB_READ_WRITE_TOKEN");
 
-  const validUntil = Date.now() + 30_000; // 30 s from now
+  const validUntil = Date.now() + 30 * 60 * 1000; // 30 minutes — 30s was too tight with cold starts + network latency
   const payload = btoa(JSON.stringify({ ...rest, validUntil }));
   const securedKey = await hmacHex(payload, token);
 

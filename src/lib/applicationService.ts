@@ -78,9 +78,13 @@ export async function submitApplication(
   payload: ApplicationPayload
 ): Promise<{ applicationId: string }> {
 
+  /** Strip characters that can confuse URL parsers in blob pathnames. */
+  const safeName = (name: string) =>
+    name.replace(/[^a-zA-Z0-9._\-]/g, "_").replace(/__+/g, "_").slice(0, 200);
+
   // ── Step 1: Upload CV ────────────────────────────────────────────────────
   const cvUrl = await uploadToBlob(
-    `applications/cv/${Date.now()}_${payload.cv.name}`,
+    `applications/cv/${Date.now()}_${safeName(payload.cv.name)}`,
     payload.cv,
   );
 
@@ -91,7 +95,7 @@ export async function submitApplication(
       if (edu.accolade) {
         const rand = Math.random().toString(36).slice(2, 7);
         accolade_url = await uploadToBlob(
-          `applications/accolades/${Date.now()}_${rand}_${edu.accolade.name}`,
+          `applications/accolades/${Date.now()}_${rand}_${safeName(edu.accolade.name)}`,
           edu.accolade,
         );
       }
