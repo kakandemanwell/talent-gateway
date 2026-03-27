@@ -1,4 +1,7 @@
+import { put } from "@vercel/blob/client";
 import { API_BASE } from "@/lib/api";
+
+const BLOB_ACCESS = import.meta.env.VITE_BLOB_ACCESS === "public" ? "public" : "private";
 
 /* ------------------------------------------------------------------ */
 /*  Types matching the form state in Index.tsx                        */
@@ -47,30 +50,35 @@ export interface ApplicationPayload {
 /*  Main submission function                                          */
 /* ------------------------------------------------------------------ */
 
-/** Upload a file via the server-side proxy — no CORS, no client token. */
+/** Upload a file directly to Vercel Blob using a short-lived client token. */
 async function uploadToBlob(pathname: string, file: File): Promise<string> {
-  const form = new FormData();
-  form.append("file", file);
-  form.append("pathname", pathname);
-  const res = await fetch(`${API_BASE}/blob/upload`, {
+  const res = await fetch(`${API_BASE}/blob/upload-url`, {
     method: "POST",
-    body: form,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pathname, contentType: file.type }),
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({})) as { error?: string };
-    throw new Error(err.error ?? `Upload failed: ${res.status}`);
+    throw new Error(err.error ?? `Failed to get upload token: ${res.status}`);
   }
-  const { url } = await res.json() as { url: string };
-  return url;
+
+  const { clientToken } = await res.json() as { clientToken: string };
+  const blob = await put(pathname, file, {
+    access: BLOB_ACCESS,
+    token: clientToken,
+  });
+
+  return blob.url;
 }
 
 /**
  * Submit a complete job application.
  *
  * Upload flow (Vercel Blob):
- *   1. POST multipart/form-data to /api/blob/upload.
- *   2. The serverless function streams the file to Vercel Blob using the
- *      project RW token and returns the public blob URL.
+ *   1. POST { pathname, contentType } to /api/blob/upload-url.
+ *   2. The browser uploads the file directly to Vercel Blob using the
+ *      short-lived client token returned by the server.
  *   3. POST a JSON body with the resulting blob URLs to /api/applications.
  */
 export async function submitApplication(

@@ -77,7 +77,7 @@ export default async function handler(request: Request): Promise<Response> {
       token: rwToken,
       pathname,
       allowedContentTypes,
-      maximumSizeInBytes: 10 * 1024 * 1024,
+      maximumSizeInBytes: 12 * 1024 * 1024,
       addRandomSuffix: true,
     });
 
