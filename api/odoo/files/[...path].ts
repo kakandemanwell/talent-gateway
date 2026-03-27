@@ -35,9 +35,11 @@ async function handleRequest(request: Request): Promise<Response> {
 
   const url = new URL(request.url);
 
-  // Extract segments after /api/odoo/files/
-  // URL shape: /api/odoo/files/<applicationId>/<type>/...
-  const pathAfterFiles = url.pathname.replace(/.*\/api\/odoo\/files\//, "");
+  // Extract segments after the /files/ prefix.
+  // Vercel rewrites keep the original request URL in request.url, so the
+  // pathname may be either /functions/v1/files/... (client-facing) or
+  // /api/odoo/files/... (direct). Strip everything up to and including /files/.
+  const pathAfterFiles = url.pathname.replace(/.*\/files\//, "");
   const segments = pathAfterFiles.split("/").filter(Boolean);
 
   if (segments.length < 2) {
