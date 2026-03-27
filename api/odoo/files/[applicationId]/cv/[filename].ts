@@ -1,4 +1,4 @@
-import { config, handleOdooFileRequest } from "../../../_shared.js";
+import { config, handleOdooFileRequest } from "../../_shared.js";
 
 export { config };
 
