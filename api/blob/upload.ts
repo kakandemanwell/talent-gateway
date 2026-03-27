@@ -7,20 +7,17 @@
  *   - file:     the file bytes
  *   - pathname: the destination path (e.g. "applications/cv/123_resume.pdf")
  *
- * This Edge function streams the file straight to Vercel Blob's internal API
- * using the server-side RW token — no CORS, no client token ceremony.
+ * This serverless function forwards the uploaded file to Vercel Blob using the
+ * official SDK — no CORS, no client token ceremony.
  *
  * Returns: { url: string }  — the blob URL returned by Vercel Blob.
  */
+import { put } from "@vercel/blob";
 import { corsHeaders, handleOptions } from "../_lib/helpers.js";
 import { getBlobStoreAccess } from "../_lib/storage.js";
 
-export const config = { runtime: "edge" };
+export const config = { runtime: "nodejs" };
 
-// Vercel Blob upload endpoint — Vercel sets VERCEL_BLOB_API_URL automatically
-// in Edge/serverless environments; fall back to the known CDN base URL.
-const BLOB_API_URL = process.env.VERCEL_BLOB_API_URL ?? "https://blob.vercel-storage.com";
-const BLOB_API_VERSION = "12";
 const BLOB_STORE_ACCESS = getBlobStoreAccess();
 
 export default async function handler(request: Request): Promise<Response> {
@@ -50,31 +47,27 @@ export default async function handler(request: Request): Promise<Response> {
     return Response.json({ error: "file and pathname are required" }, { status: 422, headers: corsHeaders(request) });
   }
 
-  // Forward the raw file to Vercel Blob using the server RW token.
-  // PUT /<pathname> with Authorization: Bearer <rwToken>
-  const blobRes = await fetch(`${BLOB_API_URL}/${pathname}`, {
-    method: "PUT",
-    headers: {
-      "authorization": `Bearer ${rwToken}`,
-      "x-api-version": BLOB_API_VERSION,
-      "x-vercel-blob-access": BLOB_STORE_ACCESS,
-      "x-add-random-suffix": "0",
-      "content-type": file.type || "application/octet-stream",
-    },
-    body: file.stream(),
-    // @ts-expect-error -- Edge fetch supports duplex streaming
-    duplex: "half",
-  });
+  const normalizedPathname = pathname
+    .trim()
+    .replace(/^\/+/, "")
+    .replace(/\\/g, "/")
+    .replace(/\/+/g, "/");
 
-  if (!blobRes.ok) {
-    let msg = blobRes.statusText;
-    try {
-      const errBody = (await blobRes.json()) as { error?: { message?: string } };
-      msg = errBody.error?.message ?? msg;
-    } catch { /* ignore */ }
-    return Response.json({ error: `Blob upload failed: ${msg}` }, { status: blobRes.status, headers: corsHeaders(request) });
+  if (!normalizedPathname) {
+    return Response.json({ error: "pathname is required" }, { status: 422, headers: corsHeaders(request) });
   }
 
-  const result = (await blobRes.json()) as { url: string; pathname: string };
-  return Response.json({ url: result.url }, { headers: corsHeaders(request) });
+  try {
+    const result = await put(normalizedPathname, file, {
+      access: BLOB_STORE_ACCESS,
+      addRandomSuffix: false,
+      token: rwToken,
+      contentType: file.type || undefined,
+    });
+
+    return Response.json({ url: result.url }, { headers: corsHeaders(request) });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return Response.json({ error: `Blob upload failed: ${message}` }, { status: 400, headers: corsHeaders(request) });
+  }
 }
