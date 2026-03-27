@@ -33,7 +33,7 @@ async function generateClientToken(opts: {
     throw new Error("Invalid BLOB_READ_WRITE_TOKEN");
   }
 
-  const validUntil = Date.now() + 30_000;
+  const validUntil = Date.now() + 30 * 60 * 1000;
   const payload = btoa(JSON.stringify({ ...rest, validUntil }));
   const securedKey = await hmacHex(payload, token);
   const combined = btoa(`${securedKey}.${payload}`);
