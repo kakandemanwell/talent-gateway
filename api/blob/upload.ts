@@ -10,9 +10,10 @@
  * This Edge function streams the file straight to Vercel Blob's internal API
  * using the server-side RW token — no CORS, no client token ceremony.
  *
- * Returns: { url: string }  — the public CDN URL of the uploaded file.
+ * Returns: { url: string }  — the blob URL returned by Vercel Blob.
  */
 import { corsHeaders, handleOptions } from "../_lib/helpers.js";
+import { getBlobStoreAccess } from "../_lib/storage.js";
 
 export const config = { runtime: "edge" };
 
@@ -20,6 +21,7 @@ export const config = { runtime: "edge" };
 // in Edge/serverless environments; fall back to the known CDN base URL.
 const BLOB_API_URL = process.env.VERCEL_BLOB_API_URL ?? "https://blob.vercel-storage.com";
 const BLOB_API_VERSION = "12";
+const BLOB_STORE_ACCESS = getBlobStoreAccess();
 
 export default async function handler(request: Request): Promise<Response> {
   const preflight = handleOptions(request);
@@ -55,7 +57,7 @@ export default async function handler(request: Request): Promise<Response> {
     headers: {
       "authorization": `Bearer ${rwToken}`,
       "x-api-version": BLOB_API_VERSION,
-      "x-vercel-blob-access": "public",
+      "x-vercel-blob-access": BLOB_STORE_ACCESS,
       "x-add-random-suffix": "0",
       "content-type": file.type || "application/octet-stream",
     },

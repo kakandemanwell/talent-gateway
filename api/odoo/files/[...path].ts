@@ -1,17 +1,19 @@
+import { get as getBlob } from "@vercel/blob";
 import sql from "../../_lib/db.js";
 import { bearerAuth } from "../../_lib/auth.js";
+import { getBlobStoreAccess } from "../../_lib/storage.js";
 
-export const config = { runtime: 'edge' };
+export const config = { runtime: "nodejs" };
 
 /**
  * GET /functions/v1/files/:path*
  *
  * Backward-compatible file-access endpoint for Odoo.
  *
- * With Vercel Blob, files are served directly from Vercel's CDN and the full
- * blob URL is stored in the database.  This route parses the application ID
- * from the request path, looks up the stored blob URL, enforces Bearer auth,
- * then issues a 302 redirect so Odoo's HTTP client follows to the CDN.
+ * With Vercel Blob, the full blob URL is stored in the database. This route
+ * parses the application ID from the request path, looks up the stored blob
+ * URL, enforces Bearer auth, then either redirects to a public blob or streams
+ * a private blob through the gateway.
  *
  * Path format (same as before):
  *   /functions/v1/files/{applicationId}/cv/{filename}
@@ -21,8 +23,7 @@ export const config = { runtime: 'edge' };
  *   /api/odoo/files/{applicationId}/cv/{filename}
  *   /api/odoo/files/{applicationId}/accolades/{filename}
  *
- * Only the first two path segments (applicationId + type) are used for the
- * DB lookup; the filename portion is informational.
+ * For accolades, a third path segment may contain the education row ID.
  */
 export default async function handler(request: Request): Promise<Response> {
   const authErr = bearerAuth(request);
@@ -48,7 +49,7 @@ export default async function handler(request: Request): Promise<Response> {
     return Response.json({ error: "Invalid file path" }, { status: 400 });
   }
 
-  const [applicationId, fileType] = segments;
+  const [applicationId, fileType, fileRef] = segments;
 
   try {
     let blobUrl: string | null = null;
@@ -60,15 +61,19 @@ export default async function handler(request: Request): Promise<Response> {
       blobUrl = rows[0]?.cv_file_path ?? null;
 
     } else if (fileType === "accolades") {
-      // For accolades, the 3rd segment is an index or filename.
-      // We return the first accolade for this application if no index is
-      // available; Odoo uses the url from the get-applications response anyway.
-      const rows = await sql`
-        SELECT accolade_file_path FROM education
-        WHERE application_id = ${applicationId}
-          AND accolade_file_path IS NOT NULL
-        ORDER BY id
-      ` as Array<{ accolade_file_path: string }>;
+      const rows = fileRef
+        ? await sql`
+            SELECT accolade_file_path FROM education
+            WHERE application_id = ${applicationId}
+              AND id = ${fileRef}
+              AND accolade_file_path IS NOT NULL
+          ` as Array<{ accolade_file_path: string }>
+        : await sql`
+            SELECT accolade_file_path FROM education
+            WHERE application_id = ${applicationId}
+              AND accolade_file_path IS NOT NULL
+            ORDER BY id
+          ` as Array<{ accolade_file_path: string }>;
       blobUrl = rows[0]?.accolade_file_path ?? null;
     }
 
@@ -76,8 +81,26 @@ export default async function handler(request: Request): Promise<Response> {
       return Response.json({ error: "File not found" }, { status: 404 });
     }
 
-    // Redirect the Odoo HTTP client straight to the Vercel Blob CDN URL.
-    return Response.redirect(blobUrl, 302);
+    if (getBlobStoreAccess() === "public") {
+      return Response.redirect(blobUrl, 302);
+    }
+
+    const blob = await getBlob(blobUrl, {
+      access: "private",
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
+
+    if (!blob || blob.statusCode !== 200 || !blob.stream) {
+      return Response.json({ error: "File not found" }, { status: 404 });
+    }
+
+    const headers = new Headers();
+    headers.set("Content-Type", blob.blob.contentType || "application/octet-stream");
+    headers.set("Content-Disposition", blob.blob.contentDisposition);
+    headers.set("Cache-Control", blob.blob.cacheControl);
+    headers.set("ETag", blob.blob.etag);
+
+    return new Response(blob.stream, { status: 200, headers });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     return Response.json({ error: msg }, { status: 500 });

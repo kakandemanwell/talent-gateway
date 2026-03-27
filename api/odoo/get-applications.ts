@@ -9,8 +9,8 @@ export const config = { runtime: 'edge' };
  * GET /functions/v1/odoo-get-applications
  *
  * Called by Odoo daily cron (5 PM EAT) or on-demand to pull pending
- * applications.  Returns structured application data with direct Vercel
- * Blob URLs for CV and accolade files — no proxy, no URL expiry.
+ * applications. Returns structured application data with file URLs that are
+ * either direct public blob URLs or authenticated proxy URLs for private stores.
  *
  * Query params:
  *   job_ids          — comma-separated odoo_job_id values (required unless
@@ -32,6 +32,7 @@ export default async function handler(request: Request): Promise<Response> {
   const jobIdsParam   = url.searchParams.get("job_ids");
   const statusFilter  = url.searchParams.get("status") ?? "new";
   const appRefsParam  = url.searchParams.get("application_refs");
+  const requestOrigin = url.origin;
 
   try {
     let apps: Array<{
@@ -110,7 +111,7 @@ export default async function handler(request: Request): Promise<Response> {
         FROM experience WHERE application_id = ANY(${appIds})
       `,
       sql`
-        SELECT application_id, qualification, level, field_of_study,
+        SELECT id, application_id, qualification, level, field_of_study,
                institution, year_completed, accolade_file_path
         FROM education WHERE application_id = ANY(${appIds})
       `,
@@ -143,8 +144,9 @@ export default async function handler(request: Request): Promise<Response> {
     // ── Build response ─────────────────────────────────────────────────────
     const applications = await Promise.all(
       apps.map(async (app) => {
-        // presignFile is a passthrough — returns the stored blob URL as-is
-        const cvSigned = presignFile(app.cv_file_path);
+        const cvFilename = app.cv_file_path ? new URL(app.cv_file_path).pathname.split("/").pop() ?? "cv" : "cv";
+        const cvProxyUrl = `${requestOrigin}/functions/v1/files/${app.id}/cv/${encodeURIComponent(cvFilename)}`;
+        const cvSigned = presignFile(app.cv_file_path, cvProxyUrl);
 
         const appExperience = (expByApp.get(app.id) ?? []).map((exp) => ({
           position:    exp.position,
@@ -158,7 +160,11 @@ export default async function handler(request: Request): Promise<Response> {
 
         const appEducation = await Promise.all(
           (eduByApp.get(app.id) ?? []).map(async (edu) => {
-            const accoInfo = presignFile(edu.accolade_file_path as string | null);
+            const accoladeId = String(edu.id ?? "");
+            const accoladeProxyUrl = accoladeId
+              ? `${requestOrigin}/functions/v1/files/${app.id}/accolades/${encodeURIComponent(accoladeId)}`
+              : null;
+            const accoInfo = presignFile(edu.accolade_file_path as string | null, accoladeProxyUrl);
             return {
               qualification: edu.qualification,
               level:         edu.level,
