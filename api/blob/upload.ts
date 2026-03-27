@@ -20,7 +20,7 @@ export const config = { runtime: "nodejs" };
 
 const BLOB_STORE_ACCESS = getBlobStoreAccess();
 
-export default async function handler(request: Request): Promise<Response> {
+async function handleRequest(request: Request): Promise<Response> {
   const preflight = handleOptions(request);
   if (preflight) return preflight;
 
@@ -70,4 +70,12 @@ export default async function handler(request: Request): Promise<Response> {
     const message = error instanceof Error ? error.message : "Unknown error";
     return Response.json({ error: `Blob upload failed: ${message}` }, { status: 400, headers: corsHeaders(request) });
   }
+}
+
+export async function POST(request: Request): Promise<Response> {
+  return handleRequest(request);
+}
+
+export async function OPTIONS(request: Request): Promise<Response> {
+  return handleRequest(request);
 }

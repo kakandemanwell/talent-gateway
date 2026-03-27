@@ -25,7 +25,7 @@ export const config = { runtime: "nodejs" };
  *
  * For accolades, a third path segment may contain the education row ID.
  */
-export default async function handler(request: Request): Promise<Response> {
+async function handleRequest(request: Request): Promise<Response> {
   const authErr = bearerAuth(request);
   if (authErr) return authErr;
 
@@ -105,4 +105,8 @@ export default async function handler(request: Request): Promise<Response> {
     const msg = err instanceof Error ? err.message : "Unknown error";
     return Response.json({ error: msg }, { status: 500 });
   }
+}
+
+export async function GET(request: Request): Promise<Response> {
+  return handleRequest(request);
 }
