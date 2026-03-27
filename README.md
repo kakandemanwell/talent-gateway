@@ -19,7 +19,8 @@ Vercel Edge
    ├── /* (React SPA)             → dist/         (static, CDN-cached)
    ├── /api/jobs*                 → api/jobs/      (serverless)
    ├── /api/applications          → api/applications.ts (serverless)
-   ├── /api/blob/upload-url       → api/blob/upload-url.ts (serverless)
+  ├── /api/blob/upload           → api/blob/upload.ts (serverless)
+  ├── /api/blob/upload-url       → api/blob/upload-url.ts (compat)
    ├── /api/odoo/*                → api/odoo/      (serverless, bearer auth)
    └── /functions/v1/*            → rewrites → api/odoo/* (Odoo compat)
 
@@ -29,18 +30,20 @@ Vercel Blob CDN      ← CV and accolade files (direct browser upload)
 
 ### File upload flow
 
-Files bypass the serverless function entirely to stay well under Vercel's
-4.5 MB request body limit:
+Files are uploaded through the blob proxy endpoint in the current app flow:
 
 ```
-Browser → POST /api/blob/upload-url  (get a short-lived upload token)
-Browser → PUT  <blob CDN>            (stream bytes directly to CDN)
+Browser → POST /api/blob/upload      (multipart/form-data with file + pathname)
+API     → PUT  <blob API>            (stream bytes to Vercel Blob)
 Browser → POST /api/applications     (JSON body with blob URLs, no files)
 API     → INSERT into Neon DB        (stores blob URL as cv_file_path)
 ```
 
 Odoo receives the blob URL directly from `GET /functions/v1/odoo-get-applications`
 and fetches the file from the CDN. No proxy, no URL expiry.
+
+`/api/blob/upload-url` still exists as a compatibility endpoint for older cached
+frontend bundles that use the short-lived client-token flow.
 
 ---
 
@@ -267,7 +270,8 @@ api/
   _lib/          Shared utilities (db, auth, storage, helpers)
   jobs/          GET /api/jobs  and  GET /api/jobs/:id
   applications.ts POST /api/applications  (accepts JSON with blob URLs)
-  blob/          POST /api/blob/upload-url  (issues Vercel Blob upload token)
+  blob/          POST /api/blob/upload      (streams file to Vercel Blob)
+                 POST /api/blob/upload-url  (compat token endpoint)
   odoo/          All Odoo-facing routes (bearer auth)
     get-jobs.ts
     push-job.ts

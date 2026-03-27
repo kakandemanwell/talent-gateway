@@ -3,11 +3,12 @@
  *
  * Upload strategy
  * ───────────────
- * Files are uploaded *client-side* directly to Vercel Blob.  The browser calls
- * POST /api/blob/upload-url to obtain a short-lived client token, then streams
- * the file straight to Vercel's CDN — the serverless function never touches the
- * file bytes.  This keeps the Vercel request payload well under the 4.5 MB
- * serverless body limit.
+ * Files are uploaded through POST /api/blob/upload. The browser sends
+ * multipart/form-data to a server-side proxy which streams the bytes to Vercel
+ * Blob using the project RW token, then stores the resulting public URL.
+ *
+ * POST /api/blob/upload-url remains available only as a backwards-compatible
+ * token endpoint for older cached frontend bundles.
  *
  * What is stored in the database
  * ───────────────────────────────

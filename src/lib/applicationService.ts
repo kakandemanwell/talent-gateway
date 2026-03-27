@@ -68,10 +68,9 @@ async function uploadToBlob(pathname: string, file: File): Promise<string> {
  * Submit a complete job application.
  *
  * Upload flow (Vercel Blob):
- *   1. POST { pathname, contentType } to /api/blob/upload-url to get a
- *      short-lived client token from the server.
- *   2. Use put() to stream the file directly to Vercel Blob CDN using
- *      that token — no callback mechanism, no server round-trip for bytes.
+ *   1. POST multipart/form-data to /api/blob/upload.
+ *   2. The serverless function streams the file to Vercel Blob using the
+ *      project RW token and returns the public blob URL.
  *   3. POST a JSON body with the resulting blob URLs to /api/applications.
  */
 export async function submitApplication(
