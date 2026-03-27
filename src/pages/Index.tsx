@@ -77,7 +77,7 @@ interface QuestionAnswerState {
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
-const MAX_CV_SIZE = 12 * 1024 * 1024; // 12MB
+const MAX_UPLOAD_SIZE = 12 * 1024 * 1024; // 12MB
 
 const EDUCATION_LEVELS: { key: string; label: string }[] = [
   { key: "certificate",    label: "Certificate" },
@@ -178,7 +178,7 @@ const Index = () => {
       e.target.value = "";
       return;
     }
-    if (file.size > MAX_CV_SIZE) {
+    if (file.size > MAX_UPLOAD_SIZE) {
       setErrors((prev) => ({ ...prev, cv: "File size must not exceed 12MB." }));
       e.target.value = "";
       return;
@@ -191,13 +191,50 @@ const Index = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") {
+      setErrors((prev) => ({
+        ...prev,
+        education: {
+          ...prev.education,
+          [eduId]: {
+            ...prev.education?.[eduId],
+            accolade: "Only PDF files are accepted.",
+          },
+        },
+      }));
       toast({ title: "Invalid file", description: "Only PDF files are accepted for accolades.", variant: "destructive" });
       e.target.value = "";
       return;
     }
+
+    if (file.size > MAX_UPLOAD_SIZE) {
+      setErrors((prev) => ({
+        ...prev,
+        education: {
+          ...prev.education,
+          [eduId]: {
+            ...prev.education?.[eduId],
+            accolade: "File size must not exceed 12MB.",
+          },
+        },
+      }));
+      toast({ title: "File too large", description: "Accolade files must not exceed 12MB.", variant: "destructive" });
+      e.target.value = "";
+      return;
+    }
+
     setEducation((prev) =>
       prev.map((row) => (row.id === eduId ? { ...row, accolade: file } : row))
     );
+    setErrors((prev) => ({
+      ...prev,
+      education: {
+        ...prev.education,
+        [eduId]: {
+          ...prev.education?.[eduId],
+          accolade: "",
+        },
+      },
+    }));
   };
 
   const updateExperience = (id: string, field: keyof ExperienceRow, value: string) => {
@@ -292,6 +329,7 @@ const Index = () => {
       if (!row.field.trim()) rowErr.field = "Required";
       if (!row.institution.trim()) rowErr.institution = "Required";
       if (!row.yearCompleted.trim()) rowErr.yearCompleted = "Required";
+      if (row.accolade && row.accolade.size > MAX_UPLOAD_SIZE) rowErr.accolade = "File size must not exceed 12MB.";
       if (Object.keys(rowErr).length) eduErrors[row.id] = rowErr;
     });
     if (Object.keys(eduErrors).length) newErrors.education = eduErrors;
@@ -702,9 +740,12 @@ const Index = () => {
                           type="file"
                           accept=".pdf"
                           onChange={(e) => handleAccoladeChange(row.id, e)}
-                          className="text-sm file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:text-primary-foreground"
+                          className={errors.education?.[row.id]?.accolade ? "border-destructive text-sm file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:text-primary-foreground" : "text-sm file:mr-2 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1 file:text-xs file:text-primary-foreground"}
                         />
                       </div>
+                      {errors.education?.[row.id]?.accolade && (
+                        <p className="text-xs text-destructive">{errors.education[row.id].accolade}</p>
+                      )}
                       {row.accolade && (
                         <p className="text-xs text-muted-foreground">{row.accolade.name}</p>
                       )}
