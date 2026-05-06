@@ -96,9 +96,9 @@ export default async function handler(req: any, res: any) {
           RETURNING id
         `;
 
-        userId = newUsers[0].id;
+        userId = (newUsers[0] as any).id;
       } else {
-        userId = existingUsers[0].id;
+        userId = (existingUsers[0] as any).id;
       }
 
       // Add to org
