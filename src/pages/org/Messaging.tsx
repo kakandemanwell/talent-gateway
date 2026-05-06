@@ -47,7 +47,7 @@ export default function Messaging() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2"><Label>Name</Label><Input value={active.name} readOnly /></div>
               <div className="space-y-2"><Label>Trigger stage</Label>
-                <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={active.trigger} readOnly>
+                <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={active.trigger} disabled>
                   {[...PIPELINE_STAGES, "Manual"].map((s) => <option key={s}>{s}</option>)}
                 </select>
               </div>
